@@ -5,17 +5,18 @@ This file contains function prototypes for the audio module.
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include "settings.h"
 #include "raylib.h"
 
-typedef struct audio{
+typedef struct Audio{
     /* This struct contains the audios that the game has. */
     Music bg_music;                 // Background music
     Sound scream_sound;             // Scream sound
-} audio;
+} Audio;
 
-audio audio_init();                 // Initializes the game's audio.
-void audio_update(audio* audio);    // Keep updating background music buffer.
-void audio_close(audio* audio);     // Close the audio device.
-void play_scream(audio* audio);     // Play the scream sound.
+Audio InitAudio(Settings* game_settings);                 // Initializes the game's audio.
+void UpdateAudio(Audio* audio);    // Keep updating background music buffer.
+void CloseAudio(Audio* audio);     // Close the audio device.
+void PlayScream(Audio* audio);     // Play the scream sound.
 
 #endif

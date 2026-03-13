@@ -5,14 +5,18 @@ contained in the settings.h header file.
 
 #include "settings.h"
 
-int window_width = 1200;
-int window_height = 800;
-int fps = 60;
-float game_volume = 50;
-float mc_speed = 5.0f;
-Vector2 mc_size = {100.0f, 100.0f};
+Settings InitSettings(){
+    Settings new_settings = {0};
+    new_settings.window_width = 1200;
+    new_settings.window_height = 800;
+    new_settings.fps = 60;
+    new_settings.game_volume = 50;
+    new_settings.mc_speed = 2.5f;
+    
+    return new_settings;
+}
 
-int change_volume(int volume) {
-    volume += 5;
-    return volume;
+void change_volume(Settings* game_settings) {
+    game_settings->game_volume += 5;
+    SetMasterVolume(game_settings->game_volume);
 }

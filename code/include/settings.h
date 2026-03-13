@@ -8,14 +8,16 @@ settings module.
 
 #include "raylib.h"
 
-// Global variables for settings.
-extern int window_width;
-extern int window_height;
-extern int fps;
-extern float game_volume;
-extern float mc_speed;
-extern Vector2 mc_size;
 
-int change_volume(int volume);
+typedef struct Settings{
+    int window_width;
+    int window_height;
+    int fps;
+    float game_volume;
+    float mc_speed;
+} Settings;
+
+Settings InitSettings();
+void change_volume(Settings* game_settings);
 
 #endif

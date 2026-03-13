@@ -2,79 +2,86 @@
 
 #include "raylib.h"
 #include "settings.h"
-#include "mc.h"
+#include "character.h"
 #include "audio.h"
 
-void init_game();
-void run_game(mc* player, audio* game_audio);
-void check_movement(mc* player);
+typedef enum {
+    GAMEPLAY,
+    PAUSE,
+    GAMEOVER
+} GameState;
+
+void InitGame(Settings* game_settings);
+void RunGame(Character* player, Audio* game_audio, Settings* game_settings);
 
 int main(void){
     // Initialize the game.
-    init_game();
+    Settings game_settings = InitSettings();
+    InitGame(&game_settings);
 
     // Load game resources.
-    mc player = mc_init();
-    audio game_audio = audio_init();
+    Character player = InitCharacter(&game_settings);
+    Audio game_audio = InitAudio(&game_settings);
 
     // Run the game.
-    run_game(&player, &game_audio);
+    RunGame(&player, &game_audio, &game_settings);
     return 0;
 }
 
-void init_game(){
+void InitGame(Settings* game_settings){
     // Prepare and initialize the game windows.
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
-    SetTargetFPS(fps);
-    InitWindow(window_width, window_height, "Top Secret");
+    SetTargetFPS(game_settings->fps);
+    InitWindow(game_settings->window_width, game_settings->window_height, "Aisling");
+    Image icon = LoadImage("../assets/images/icon/app_icon.png");
+    SetWindowIcon(icon);
+    UnloadImage(icon);
+    SetExitKey(0); // Prevent closing the window with ESC automatically so we can use it for pause
 }
 
-void run_game(mc* player, audio* game_audio){
+void RunGame(Character* player, Audio* game_audio, Settings* game_settings){
+    GameState game_state = GAMEPLAY;
+    
     while (!WindowShouldClose()){
         // Update audio stream.
-        audio_update(game_audio);
-
-        // Detects player movement.
-        check_movement(player);
-        if (player->position.x == 200){
-            play_scream(game_audio);
+        UpdateAudio(game_audio);
+        
+        // Toggle pause state
+        if (IsKeyPressed(KEY_ESCAPE)){
+            if (game_state == GAMEPLAY) {
+                game_state = PAUSE;
+            } else if (game_state == PAUSE) {
+                game_state = GAMEPLAY;
+            }
+        }
+        
+        if (game_state == GAMEPLAY){
+            if (player->position.x == 200){
+                PlayScream(game_audio);
+            }
+            UpdateCharacter(player, game_settings);
+            HideCursor();
+        } else if (game_state == PAUSE){
+            ShowCursor();
         }
         
         // Draw game assets to the screen.
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        DrawTexture(player->character, player->position.x, player->position.y, WHITE);
-        mc_update(player);
+        
+        DrawCharacter(player);
+        
+        if (game_state == PAUSE) {
+            DrawText("PAUSED", game_settings->window_width / 2 - MeasureText("PAUSED", 40) / 2, game_settings->window_height / 2 - 20, 40, LIGHTGRAY);
+        }
+
         EndDrawing();
     }
 
     // Prepare to stop the game.
-    audio_close(game_audio);
+    CloseAudio(game_audio);
+    CloseCharacter(player);
 
     // Close the game window.
     CloseWindow();
-}
-
-void check_movement(mc* player){
-    // Check for player movement.
-    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)){
-        player->moving_left = true;
-    } else{
-        player->moving_left = false;
-    }
-    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)){
-        player->moving_right = true;
-    } else{
-        player->moving_right = false;
-    }
-    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)){
-        player->moving_up = true;
-    } else{
-        player->moving_up = false;
-    }
-    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)){
-        player->moving_down = true;
-    } else{
-        player->moving_down = false;
-    }
 }

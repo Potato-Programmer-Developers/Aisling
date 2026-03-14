@@ -4,19 +4,19 @@ This file contains the main logic for the game.
 Made by Andrew Zhuo and Steven Kenneth Darwy
 */
 
+#include <stdio.h>
 #include "raylib.h"
 #include "settings.h"
 #include "character.h"
 #include "audio.h"
-#include "interactive.h"
+#include "dialogue.h"
 #include "scene.h"
 #include "map.h"
 #include "game_context.h"
 #include "state.h"
 
 void InitGame(Settings* game_settings);
-void RunGame(Character* player, Audio* game_audio, Settings* game_settings, Scene* game_scene, Interactive* game_interactive, Map* game_map, GameContext* game_context);
-void EndGame(Audio* game_audio, Character* player, Scene* game_scene, Interactive* game_interactive, Map* game_map);
+void RunGame(Character* player, Audio* game_audio, Settings* game_settings, Scene* game_scene, Dialogue* dialogue, Interactable* worldObjects);
 
 int main(void){
     /* Initialize the game */
@@ -24,6 +24,10 @@ int main(void){
     // Initialize the settings and game.
     Settings game_settings = InitSettings();
     InitGame(&game_settings);
+    Interactable worldObjects[2] = {
+        {{ 150, 200, 50, 50 }, "../assets/text/signpost.txt", false},
+        {{ 600, 300, 60, 60 }, "../assets/text/oldman.txt", false}
+    };
 
     // Load game resources.
     Character player = InitCharacter(&game_settings);
@@ -32,9 +36,10 @@ int main(void){
     Interactive game_interactive = InitInteractive(&game_settings);
     Map game_map = InitMap("../assets/map/map.json");
     GameContext game_context = InitGameContext(&game_map, &player, &game_settings);
+    Dialogue intro_dialogue = LoadDialogue("../assets/text/dialogue1.txt");
 
     // Run the game.
-    RunGame(&player, &game_audio, &game_settings, &game_scene, &game_interactive, &game_map, &game_context);
+    RunGame(&player, &game_audio, &game_settings, &game_scene, &game_interactive, &intro_dialogue, &game_map, worldObjects, &game_context);
 
     // End the game.
     EndGame(&game_audio, &player, &game_scene, &game_interactive, &game_map);
@@ -59,34 +64,69 @@ void InitGame(Settings* game_settings){
     SetExitKey(0);
 }
 
-void RunGame(Character* player, Audio* game_audio, Settings* game_settings, Scene* game_scene, Interactive* game_interactive, Map* game_map, GameContext* game_context){
+void RunGame(Character* player, Audio* game_audio, Settings* game_settings, Scene* game_scene, Interactive* game_interactive, Dialogue* intro_dialogue, Interactable* worldObjects Map* game_map, GameContext* game_context){
     /* Run the game */
     GameState game_state = MAINMENU;
-    
+    Dialogue* current_dialogue = intro_dialogue; // Pointer to the currently active dialogue (if any)
+    Interactable* objectToInteractWith = NULL; 
+
     while (!WindowShouldClose()){
         // Update audio stream.
         UpdateAudio(game_audio);
-          
-        // Toggle pause state
-        if (IsKeyPressed(KEY_ESCAPE)){
-            if (game_state == GAMEPLAY) {
-                game_state = PAUSE;
-                ShowCursor();
-            } else if (game_state == PAUSE) {
-                game_state = GAMEPLAY;
-                HideCursor();
+        Rectangle playerHitbox = { player->position.x+50, player->position.y+50, 80, 80 };
+        
+        objectToInteractWith = NULL; 
+        for (int i = 0; i < 2; i++) {
+            // 2. Check collision
+            if (CheckCollisionRecs(playerHitbox, worldObjects[i].bounds)) {
+                worldObjects[i].isActive = true;
+                objectToInteractWith = &worldObjects[i]; // Remember this object!
+            } else {
+                worldObjects[i].isActive = false;
             }
         }
-        
-        // Update game state.
-        if (game_state == GAMEPLAY){
-            if (player->position.x == 200){
-                PlayScream(game_audio);
+
+        // Toggle pause state
+        if (IsKeyPressed(KEY_ESCAPE)){
+            game_state = (game_state == PAUSE) ? GAMEPLAY : PAUSE;
+        } 
+
+        if (IsKeyPressed(KEY_ENTER)) {
+            if (game_state == GAMEPLAY && objectToInteractWith != NULL) {
+                // --- START DIALOGUE ---
+                UnloadDialogue(current_dialogue);
+                *current_dialogue = LoadDialogue(objectToInteractWith->dialoguePath);
+                
+                if (current_dialogue->line_count > 0) {
+                    game_state = DIALOGUE_CUTSCENE;
+                    current_dialogue->current_line = 0;
+                }
+            } 
+            else if (game_state == DIALOGUE_CUTSCENE) {
+                // --- ADVANCE OR CLOSE ---
+                // Increment first
+                current_dialogue->current_line++;
+                
+                // If we have reached or passed the line count, go back to gameplay
+                if (current_dialogue->current_line >= current_dialogue->line_count) {
+                    game_state = GAMEPLAY;
+                    current_dialogue->current_line = 0; // Reset for next time
+                }
             }
-            Vector2 map_size = {(float)game_context->map->tiled_map->width * game_context->map->tiled_map->tilewidth, 
-                                (float)game_context->map->tiled_map->height * game_context->map->tiled_map->tileheight};
-            UpdateCharacter(player, game_settings, map_size, game_map);
-            UpdateGameContext(game_context, game_settings, map_size);
+        }
+
+        switch(game_state) {
+            case GAMEPLAY:
+                UpdateScene(game_scene, game_settings);
+                UpdateCharacter(player, game_settings);
+
+                if (player->position.x == 200) PlayScream(game_audio);
+                HideCursor();
+                break;
+            case PAUSE:
+                // No updates needed for pause state
+                break;
+            default: break;
         }
         
         // Draw game assets to the screen.
@@ -132,17 +172,28 @@ void RunGame(Character* player, Audio* game_audio, Settings* game_settings, Scen
                 DrawPauseMenu(game_scene, game_settings, game_interactive);
         } else if (game_state == SETTINGS){
             UpdateInteractive(game_interactive, game_settings, &game_state);
+        for (int i = 0; i < 2; i++) {
+            // If active (touching), draw GREEN. Otherwise, draw GRAY.
+            Color boxColor = worldObjects[i].isActive ? LIME : GRAY;
             
-            // Set master volume
-            SetMasterVolume(game_settings->game_volume);
+            DrawRectangleRec(worldObjects[i].bounds, boxColor);
             
-            if (IsKeyPressed(KEY_ESCAPE)){
-                game_state = PAUSE;
+            if (worldObjects[i].isActive) {
+                DrawText("!", worldObjects[i].bounds.x + 20, worldObjects[i].bounds.y - 30, 20, RED);
             }
-            
-            DrawSettings(game_scene, game_settings, game_interactive);
         }
+        DrawRectangleLinesEx(playerHitbox, 1, RED);
 
+        if (game_state == PAUSE) {
+            DrawText("PAUSED", game_settings->window_width / 2 - MeasureText("PAUSED", 40) / 2, game_settings->window_height / 2 - 20, 40, LIGHTGRAY);
+        }
+        if (game_state == DIALOGUE_CUTSCENE) {
+            DrawRectangle(0, GetScreenHeight() - 120, GetScreenWidth(), 120, Fade(BLACK, 0.8f));
+            
+            const char* line = current_dialogue->lines[current_dialogue->current_line];
+            DrawText(line, GetScreenWidth()/2 - MeasureText(line, 20)/2, GetScreenHeight() - 80, 20, WHITE);
+            DrawText("Press ENTER to continue", GetScreenWidth() - 150, GetScreenHeight() - 30, 10, GRAY);
+        }
         EndDrawing();
     }
 }

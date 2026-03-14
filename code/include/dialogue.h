@@ -1,3 +1,9 @@
+/*
+This file contains function prototypes for the dialogue module.
+
+Module made by Cornelius Jabez Lim.
+*/
+
 #ifndef DIALOGUE_H
 #define DIALOGUE_H
 

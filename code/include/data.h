@@ -11,6 +11,8 @@ Made by Andrew Zhuo.
 
 typedef struct {
     Vector2 position;
+    char inventory[6][10];
+    int inventory_count;
 } Data;
 
 #endif

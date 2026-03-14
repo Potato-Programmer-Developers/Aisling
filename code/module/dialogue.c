@@ -1,3 +1,9 @@
+/*
+This file contains functions for the dialogue module.
+
+Module made by Cornelius Jabez Lim.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

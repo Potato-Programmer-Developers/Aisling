@@ -1,8 +1,9 @@
 /*
 This is for scene managing, such as loading and drawing the background.
 
-Module made by Andrew Zhuo and Steven Kenneth Darwy.
+Module made by Andrew Zhuo, Cornelius Jabez Lim, and Steven Kenneth Darwy.
 */
+
 #include "scene.h"
 
 Scene InitScene(Settings* game_settings){
@@ -10,11 +11,10 @@ Scene InitScene(Settings* game_settings){
     Scene new_scene = {0};
 
     // Load scene backgrounds
-    new_scene.mainmenu_background = LoadBackground("../assets/images/background/Mountain/parallax-mountain-bg.png", game_settings);
-    new_scene.game_background = LoadBackground("../assets/images/background/Mountain/parallax-mountain-bg.png", game_settings);
-    new_scene.pause_menu_background = LoadBackground("../assets/images/background/Mountain/parallax-mountain-bg.png", game_settings);
-    new_scene.settings_background = LoadBackground("../assets/images/background/Mountain/parallax-mountain-bg.png", game_settings);
-    new_scene.vignette = LoadBackground("../assets/images/background/vignette/vig.png", game_settings);
+    new_scene.mainmenu_background = LoadBackground("../assets/images/background/main_menu/main_menu.png", game_settings);
+    new_scene.pause_menu_background = LoadBackground("../assets/images/background/pause/pause.png", game_settings);
+    new_scene.settings_background = LoadBackground("../assets/images/background/settings/settings.png", game_settings);
+    new_scene.vignette = LoadBackground("../assets/images/background/vignette/vignette.png", game_settings);
 
     return new_scene;
 }
@@ -30,9 +30,33 @@ Texture2D LoadBackground(const char* path, Settings* game_settings){
     return background_texture;
 }
 
-void DrawMainMenu(Scene* scene){
+void DrawMainMenu(Scene* scene, Interactive* game_interactive){
     /* Draw main menu scene. */
     DrawTexture(scene->mainmenu_background, 0, 0, WHITE);
+    
+    // Draw Settings button
+    DrawTexture(
+        game_interactive->settings_button,
+        game_interactive->settings_bounds.x, 
+        game_interactive->settings_bounds.y, 
+        game_interactive->is_settings_hovered ? GRAY : WHITE
+    );
+    
+    // Draw Play button
+    DrawTexture(
+        game_interactive->play_button,
+        game_interactive->play_bounds.x, 
+        game_interactive->play_bounds.y, 
+        game_interactive->is_play_hovered ? GRAY : WHITE
+    );
+    
+    // Draw Quit button
+    DrawTexture(
+        game_interactive->quit_button,
+        game_interactive->quit_bounds.x, 
+        game_interactive->quit_bounds.y, 
+        game_interactive->is_quit_hovered ? GRAY : WHITE
+    );
 }
 
 void DrawPauseMenu(Scene* scene, Settings* game_settings, Interactive* game_interactive){

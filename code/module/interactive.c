@@ -108,6 +108,7 @@ void UpdateInteractive(Interactive* interactive, Settings* game_settings){
 
         // Update settings volume
         game_settings->game_volume = (new_knob_x - interactive->volume_slider_bar.x) / interactive->bar_width * 100.0f;
+        SetMasterVolume(game_settings->game_volume);
         
         // Update knob position
         interactive->volume_slider_knob.x = new_knob_x - interactive->knob_width / 2.0f;

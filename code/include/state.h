@@ -1,3 +1,8 @@
+/*
+This file contains the enum for the states of the game.
+
+Made by Steven Kenneth Darwy.
+*/
 #ifndef STATE_H
 #define STATE_H
 

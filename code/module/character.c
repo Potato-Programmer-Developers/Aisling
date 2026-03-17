@@ -9,8 +9,9 @@ Module made by Andrew Zhuo.
 #include "raymath.h"
 #include "settings.h"
 #include "map.h"
+#include "data.h"
 
-Character InitCharacter(Settings *game_settings) {
+Character InitCharacter(Settings *game_settings, Data *game_data){
   /* Initialize the character. */
   Character new_character = {0};
 
@@ -23,8 +24,10 @@ Character InitCharacter(Settings *game_settings) {
   new_character.sprite = new_character.sprite_idle;
 
   // Initialize character position, size, speed, and direction
-  new_character.position = (Vector2){(float)game_settings->window_width / 2,
-                                     (float)game_settings->window_height / 2};
+  new_character.position = (Vector2){
+    game_settings->window_width / 2.0f,
+    game_settings->window_height / 2.0f
+  };
   new_character.size = (Vector2){200.0f, 200.0f};
   new_character.speed = game_settings->mc_speed;
   new_character.direction = 0;

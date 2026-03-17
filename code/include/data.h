@@ -8,11 +8,20 @@ Made by Andrew Zhuo.
 #define DATA_H
 
 #include "raylib.h"
+#include "character.h"
+#include "settings.h"
 
-typedef struct {
+typedef struct Data{
     Vector2 position;
-    char inventory[6][10];
+    int direction;
+    char inventory[MAX_INVENTORY_SIZE][MAX_ITEM_NAME_LENGTH];
     int inventory_count;
+
+    int volume;
 } Data;
+
+Data LoadData(Settings* game_settings);
+void ApplyData(Character* player, Settings* game_settings, Data* data);
+void SaveData(Character* player, Settings* game_settings);
 
 #endif

@@ -15,6 +15,7 @@ Made by Andrew Zhuo, Cornelius Jabez Lim, and Steven Kenneth Darwy
 #include "settings.h"
 #include "state.h"
 #include <stdio.h>
+#include "data.h"
 
 void InitGame(Settings *game_settings);
 void RunGame(Character *player, Audio *game_audio, Settings *game_settings,
@@ -23,7 +24,7 @@ void RunGame(Character *player, Audio *game_audio, Settings *game_settings,
              Interactable *worldObjects, GameContext *game_context,
              GameState *game_state);
 void EndGame(Audio *game_audio, Character *player, Scene *game_scene,
-             Interactive *game_interactive, Map *game_map);
+             Interactive *game_interactive, Map *game_map, Settings *game_settings);
 
 int main(void) {
   /* Initialize the game */
@@ -31,57 +32,59 @@ int main(void) {
   // Initialize the settings and game.
   Settings game_settings = InitSettings();
   InitGame(&game_settings);
-  Interactable worldObjects[2] = {
-      {{150, 200, 50, 50}, "../assets/text/signpost.txt", false},
-      {{600, 300, 60, 60}, "../assets/text/oldman.txt", false}};
 
+  // Load game data.
+  Data game_data = LoadData(&game_settings);
+  
   // Load game resources.
-  Character player = InitCharacter(&game_settings);
+  Character player = InitCharacter(&game_settings, &game_data);
   Audio game_audio = InitAudio(&game_settings);
   Scene game_scene = InitScene(&game_settings);
   Interactive game_interactive = InitInteractive(&game_settings);
+  Dialogue game_dialogue = LoadDialogue("../assets/text/dialogue1.txt");
   Map game_map = InitMap("../assets/map/map.json");
-  GameContext game_context =
-      InitGameContext(&game_map, &player, &game_settings);
-  GameState game_state;
-  Dialogue intro_dialogue = LoadDialogue("../assets/text/dialogue1.txt");
-
+  Interactable worldObjects[2] = {
+      {{150, 200, 50, 50}, "../assets/text/signpost.txt", false},
+      {{600, 300, 60, 60}, "../assets/text/oldman.txt", false}};
+  GameContext game_context = InitGameContext(&game_map, &player, &game_settings);
+  GameState game_state = MAINMENU;
+  ApplyData(&player, &game_settings, &game_data);
+  
   // Run the game.
   RunGame(&player, &game_audio, &game_settings, &game_scene, &game_interactive,
-          &intro_dialogue, &game_map, worldObjects, &game_context, &game_state);
-
-  // End the game.
-  EndGame(&game_audio, &player, &game_scene, &game_interactive, &game_map);
-
-  return 0;
+    &game_dialogue, &game_map, worldObjects, &game_context, &game_state);
+    
+    // End the game.
+    EndGame(&game_audio, &player, &game_scene, &game_interactive, &game_map, &game_settings);
+    
+    return 0;
 }
 
 void InitGame(Settings *game_settings){
     /* Initialize the game */
-
+    
     // Prepare and initialize the game windows.
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
     SetTargetFPS(game_settings->fps);
     InitWindow(game_settings->window_width, game_settings->window_height,
-                "Aisling");
-
-    // Load game icon.
-    Image icon = LoadImage("../assets/images/icon/app_icon.png");
-    SetWindowIcon(icon);
-    UnloadImage(icon);
-
-    // Prevent closing the window with ESC automatically so it can be used for pause.
-    SetExitKey(0);
-}
-
+        "Aisling");
+        
+        // Load game icon.
+        Image icon = LoadImage("../assets/images/icon/app_icon.png");
+        SetWindowIcon(icon);
+        UnloadImage(icon);
+        
+        // Prevent closing the window with ESC automatically so it can be used for pause.
+        SetExitKey(0);
+    }
+    
 void RunGame(Character *player, Audio *game_audio, Settings *game_settings,
-             Scene *game_scene, Interactive *game_interactive,
-             Dialogue *intro_dialogue, Map *game_map,
-             Interactable *worldObjects, GameContext *game_context,
-             GameState *game_state){
+        Scene *game_scene, Interactive *game_interactive,
+        Dialogue *game_dialogue, Map *game_map,
+        Interactable *worldObjects, GameContext *game_context,
+        GameState *game_state){
     /* Run the game */
-    *game_state = MAINMENU;
-    Dialogue *current_dialogue = intro_dialogue;
+    Dialogue *current_dialogue = game_dialogue;
     Interactable *objectToInteractWith = NULL;
 
     while (!WindowShouldClose()){
@@ -224,8 +227,11 @@ void RunGame(Character *player, Audio *game_audio, Settings *game_settings,
 }
 
 void EndGame(Audio *game_audio, Character *player, Scene *game_scene,
-            Interactive *game_interactive, Map *game_map){
+            Interactive *game_interactive, Map *game_map, Settings *game_settings){
     /* End the game */
+
+    // Save the game data.
+    SaveData(player, game_settings);
 
     // Prepare to stop the game.
     CloseAudio(game_audio);

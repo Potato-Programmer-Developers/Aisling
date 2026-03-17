@@ -17,4 +17,4 @@ typedef struct {
     bool isActive;
 } Interactable;
 
-#endif // INTERACTION_H
+#endif

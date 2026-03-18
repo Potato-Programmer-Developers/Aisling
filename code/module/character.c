@@ -11,48 +11,46 @@ Module made by Andrew Zhuo.
 #include "settings.h"
 #include "map.h"
 #include "data.h"
-#include <stdio.h>
 
 Character InitCharacter(Settings *game_settings, Data *game_data){
-  /* Initialize the character. */
-  Character new_character = {0};
+	/* Initialize the character. */
+	Character new_character = {0};
 
-  // Load character textures
-  new_character.sprite_idle =
-      LoadTexture("../assets/images/character/idle.png");
-  new_character.sprite_walk =
-      LoadTexture("../assets/images/character/walk.png");
-  new_character.sprite_run = LoadTexture("../assets/images/character/run.png");
-  new_character.sprite = new_character.sprite_idle;
+	// Load character textures
+	new_character.sprite_idle =
+		LoadTexture("../assets/images/character/idle.png");
+	new_character.sprite_walk =
+		LoadTexture("../assets/images/character/walk.png");
+	new_character.sprite_run = LoadTexture("../assets/images/character/run.png");
+	new_character.sprite = new_character.sprite_idle;
 
-  // Initialize character position, size, speed, and direction
-  new_character.position = (Vector2){
-    game_settings->window_width / 2.0f,
-    game_settings->window_height / 2.0f
-  };
-  new_character.size = (Vector2){200.0f, 200.0f};
-  new_character.speed = game_settings->mc_speed;
-  new_character.direction = 0;
+	// Initialize character position, size, speed, and direction
+	new_character.position = (Vector2){
+		game_settings->window_width / 2.0f,
+		game_settings->window_height / 2.0f
+	};
+	new_character.size = (Vector2){200.0f, 200.0f};
+	new_character.speed = game_settings->mc_speed;
+	new_character.direction = 0;
 
-  // Initialize character animation frames
-  new_character.frame_number = 12;
-  new_character.frame_speed = 8;
-  new_character.current_frame = 0;
-  new_character.frame_counter = 0;
+	// Initialize character animation frames
+	new_character.frame_number = 12;
+	new_character.frame_speed = 8;
+	new_character.current_frame = 0;
+	new_character.frame_counter = 0;
 
-  // Initialize stamina
-  new_character.max_stamina = game_settings->max_stamina;
-  new_character.stamina = new_character.max_stamina;
-  new_character.exhausted = false;
-  new_character.needs_shift_reset = false;
+	// Initialize stamina
+	new_character.max_stamina = game_settings->max_stamina;
+	new_character.stamina = new_character.max_stamina;
+	new_character.exhausted = false;
+	new_character.needs_shift_reset = false;
 
-  float frame_width =
-      (float)new_character.sprite.width / new_character.frame_number;
-  float frame_height = (float)new_character.sprite.height / 4;
+	float frame_width = (float)new_character.sprite.width / new_character.frame_number;
+	float frame_height = (float)new_character.sprite.height / 4;
 
-  new_character.frame_rect = (Rectangle){0.0f, 0.0f, frame_width, frame_height};
+	new_character.frame_rect = (Rectangle){0.0f, 0.0f, frame_width, frame_height};
 
-  return new_character;
+	return new_character;
 }
 
 void UpdateCharacter(Character *character, Settings *game_settings, Vector2 map_size, Map *map){

@@ -24,6 +24,9 @@ GameContext InitGameContext(Map* map, Character* player, Settings* settings){
     // Initialize the player.
     game_context.player = player;
 
+    // Initialize the outdoor status.
+    game_context.is_outdoor = true;
+
     return game_context;
 }
 
@@ -32,6 +35,18 @@ void UpdateGameContext(GameContext* game_context, Settings* settings, Vector2 ma
     
     // Set camera target to follow player
     game_context->camera.target = game_context->player->position;
+    
+    // Zoom in based on hallucination level
+    if (game_context->player->hallucination > game_context->player->max_hallucination * 0.9f){
+        // Zoom increases from 1.0 at 90% of max hallucination
+        float zoom_factor = (game_context->player->hallucination - game_context->player->max_hallucination * 0.9f) / (game_context->player->max_hallucination * 0.1f);
+        game_context->camera.zoom = 1.0f + zoom_factor * 0.5f;
+        
+        // Cap zoom at 2.5x for playability
+        if (game_context->camera.zoom > 2.5f) game_context->camera.zoom = 2.5f;
+    } else {
+        game_context->camera.zoom = 1.0f;
+    }
 
     // Clamping camera target to map boundaries.
     game_context->camera.target.x = Clamp(

@@ -13,13 +13,19 @@ Made by Andrew Zhuo.
 
 typedef struct Data{
     /* Struct for game data */
+
+    // Player state
     Vector2 position;                                                // Position of the player
     int direction;                                                   // Direction the player is facing
     char inventory[MAX_INVENTORY_SIZE][MAX_ITEM_NAME_LENGTH];        // Inventory of the player
     int item_count[MAX_INVENTORY_SIZE];                              // Number of each item in the inventory
     int inventory_count;                                             // Number of items in the inventory
-    bool picked_up_items[1];                                         // State of items in the world
+    float player_hallucination_level;                                // Level of hallucination of the player
 
+    // World state
+    bool picked_up_items[1];              // State of items in the world
+
+    // Game settings
     float volume;            // Volume of the game
 } Data;
 

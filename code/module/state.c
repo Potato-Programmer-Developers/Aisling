@@ -25,7 +25,7 @@ int UpdateGame(GameState* game_state, Interactive* game_interactive,
             ShowCursor();
             break;
         case GAMEPLAY:
-            UpdateCharacter(player, game_settings, map_size, game_map);
+            UpdateCharacter(player, game_settings, map_size, game_map, game_audio, game_context->is_outdoor);
             UpdateGameContext(game_context, game_settings, map_size);
 
             if (player->position.x == 200)

@@ -45,6 +45,10 @@ Character InitCharacter(Settings *game_settings, Data *game_data){
 	new_character.exhausted = false;
 	new_character.needs_shift_reset = false;
 
+	// Initialize hallucination
+	new_character.max_hallucination = 100.0f;
+	new_character.hallucination = 0.0f;
+
 	float frame_width = (float)new_character.sprite.width / new_character.frame_number;
 	float frame_height = (float)new_character.sprite.height / 4;
 
@@ -53,7 +57,7 @@ Character InitCharacter(Settings *game_settings, Data *game_data){
 	return new_character;
 }
 
-void UpdateCharacter(Character *character, Settings *game_settings, Vector2 map_size, Map *map){
+void UpdateCharacter(Character *character, Settings *game_settings, Vector2 map_size, Map *map, Audio* audio, bool is_outdoor){
     /* Update character movement and animation. */
 
     // Calculate movement vector first to determine if actually moving
@@ -93,7 +97,14 @@ void UpdateCharacter(Character *character, Settings *game_settings, Vector2 map_
     float frame_time = GetFrameTime();  
 	
     if (is_running){
-        character->stamina -= game_settings->stamina_depletion_rate * frame_time;
+        // Calculate stamina depletion multiplier based on hallucination
+        float depletion_multiplier = 1.0f;
+        if (character->hallucination > character->max_hallucination * 0.75f){
+            // Multiplier increases from 1.0 at 75% of max hallucination
+            depletion_multiplier += (character->hallucination - character->max_hallucination * 0.75f) / (character->max_hallucination * 0.1f);
+        }
+        
+        character->stamina -= game_settings->stamina_depletion_rate * depletion_multiplier * frame_time;
         if (character->stamina <= 0){
             character->stamina = 0;
             character->exhausted = true;
@@ -108,6 +119,15 @@ void UpdateCharacter(Character *character, Settings *game_settings, Vector2 map_
         // Recover from exhaustion when stamina is at least 10%
         if (character->exhausted && character->stamina >= character->max_stamina * 0.1f){
             character->exhausted = false;
+        }
+    }
+
+    // Update hallucination if outdoors
+    if (is_outdoor){
+        character->hallucination += game_settings->hallucination_increase_rate * frame_time;
+        // Cap hallucination at 2x max_hallucination (1x represented by bar, 1x by darkening)
+        if (character->hallucination > character->max_hallucination * 2.0f){
+            character->hallucination = character->max_hallucination * 2.0f;
         }
     }
 
@@ -171,6 +191,17 @@ void UpdateCharacter(Character *character, Settings *game_settings, Vector2 map_
         if (character->current_frame >= character->frame_number){
             character->current_frame = 0;
         }
+
+        // Trigger step sound at specific frames
+        if (is_running){
+            if (character->current_frame == 0 || character->current_frame == 4){
+                PlayStep(audio, is_outdoor);
+            }
+        } else if (is_moving){
+            if (character->current_frame == 0 || character->current_frame == 3){
+                PlayStep(audio, is_outdoor);
+            }
+        }
   
         // Update character animation frame rectangle
         character->frame_rect.x = character->current_frame * character->frame_rect.width;
@@ -200,10 +231,26 @@ void DrawCharacter(Character *character){
         float posY = character->position.y + (character->size.y - bar_height) / 2.0f;
         
         // Background (empty bar)
-        DrawRectangle(posX, posY, bar_width, bar_height, BROWN);
+        DrawRectangleRec((Rectangle){posX, posY, bar_width, bar_height}, Fade(BROWN, 0.5f));
+        DrawRectangleLinesEx((Rectangle){posX - 1, posY - 1, bar_width + 2, bar_height + 2}, 1, BLACK);
         
         float current_bar_height = character->stamina / character->max_stamina * bar_height;
         // Draw from bottom up
-        DrawRectangle(posX, posY + (bar_height - current_bar_height), bar_width, current_bar_height, ORANGE);
+        DrawRectangleRec((Rectangle){posX, posY + (bar_height - current_bar_height), bar_width, current_bar_height}, ORANGE);
+    }
+
+    // Draw vertical hallucination bar on the left side if greater than 0
+    if (character->hallucination > 0){
+        float bar_width = 10.0f;
+        float bar_height = character->size.y * 0.6f;
+        float stageX = character->position.x - bar_width - 5.0f;
+        float stageY = character->position.y + (character->size.y - bar_height) / 2.0f;
+        float h_percent = character->hallucination / character->max_hallucination;
+        if (h_percent > 1.0f) h_percent = 1.0f;
+        float current_bar_height = h_percent * bar_height;
+
+        DrawRectangleRec((Rectangle){stageX, stageY, bar_width, bar_height}, Fade(GRAY, 0.5f));
+        DrawRectangleLinesEx((Rectangle){stageX - 1, stageY - 1, bar_width + 2, bar_height + 2}, 1, BLACK);
+        DrawRectangleRec((Rectangle){stageX, stageY + (bar_height - current_bar_height), bar_width, current_bar_height}, PURPLE);
     }
 }

@@ -34,7 +34,7 @@ void EndGame(Audio *game_audio, Character *player, Item worldItems[], int itemCo
 int main(void){
   /* Initialize the game */
 
-  // Initialize the settings and game.
+    // Initialize the settings and game.
     Settings game_settings = InitSettings();
     InitGame(&game_settings);
 
@@ -65,7 +65,7 @@ int main(void){
 
     // Run the game.
     RunGame(&player, &game_audio, &game_settings, &game_scene, &game_interactive,
-    &game_dialogue, &game_map, worldNPCs, worldItems, &game_context, &game_state);
+            &game_dialogue, &game_map, worldNPCs, worldItems, &game_context, &game_state);
     
     // End the game.
     EndGame(&game_audio, &player, worldItems, 1, &game_scene, &game_interactive, &game_map, &game_settings);
@@ -180,10 +180,17 @@ void DrawGame(Scene *game_scene, Settings *game_settings,
         EndMode2D();
         
         DrawTexture(game_scene->vignette, 0, 0, WHITE);
+        
+        // Draw darkening effect based on hallucination
+        // Only start darkening after the bar is full (hallucination > max_hallucination)
+        float darkness_alpha = (player->hallucination - player->max_hallucination) * 5.0f / player->max_hallucination;
+        if (darkness_alpha > 0.0f){
+            if (darkness_alpha > 1.0f) darkness_alpha = 1.0f;
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, darkness_alpha));
+        }
 
         if (*game_state == DIALOGUE_CUTSCENE){
-            DrawRectangle(0, GetScreenHeight() - 120, GetScreenWidth(), 120,
-                        Fade(BLACK, 0.8f));
+            DrawRectangle(0, GetScreenHeight() - 120, GetScreenWidth(), 120, Fade(BLACK, 0.8f));
 
             const char *line =
                 game_dialogue->lines[game_dialogue->current_line];

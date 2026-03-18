@@ -18,6 +18,7 @@ Settings InitSettings(){
     new_settings.max_stamina = 100.0f;
     new_settings.stamina_depletion_rate = 20.0f;
     new_settings.stamina_recovery_rate = 10.0f;
+    new_settings.hallucination_increase_rate = 1.0f;
     
     return new_settings;
 }

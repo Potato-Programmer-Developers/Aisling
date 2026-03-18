@@ -34,6 +34,8 @@ Data LoadData(Settings* game_settings){
 
 void ApplyData(Character* player, Item worldItems[], int itemCount, Settings* game_settings, Data* data){
     /* Apply the data */
+
+    // Apply player state
     player->position = data->position;
     player->direction = data->direction;
     for (int i = 0; i < data->inventory_count; i++){
@@ -41,12 +43,14 @@ void ApplyData(Character* player, Item worldItems[], int itemCount, Settings* ga
         player->item_count[i] = data->item_count[i];
     }
     player->inventory_count = data->inventory_count;
+    player->hallucination = data->player_hallucination_level;
 
     // Apply world item states
     for (int i = 0; i < itemCount; i++){
         worldItems[i].picked_up = data->picked_up_items[i];
     }
 
+    // Apply game settings
     game_settings->game_volume = data->volume;
     SetMasterVolume(game_settings->game_volume);
 }
@@ -54,6 +58,8 @@ void ApplyData(Character* player, Item worldItems[], int itemCount, Settings* ga
 void SaveData(Character* player, Item worldItems[], int itemCount, Settings* game_settings){
     /* Save the data */
     Data data = {0};
+
+    // Save player state
     data.position = player->position;
     data.direction = player->direction;
     for (int i = 0; i < player->inventory_count; i++){
@@ -61,12 +67,14 @@ void SaveData(Character* player, Item worldItems[], int itemCount, Settings* gam
         data.item_count[i] = player->item_count[i];
     }
     data.inventory_count = player->inventory_count;
+    data.player_hallucination_level = player->hallucination;
 
     // Save world item states
     for (int i = 0; i < itemCount; i++){
         data.picked_up_items[i] = worldItems[i].picked_up;
     }
 
+    // Save game settings
     data.volume = game_settings->game_volume;
     SaveFileData("../data/data.dat", &data, sizeof(Data));
 }

@@ -13,6 +13,7 @@ Module made by Andrew Zhuo.
 
 #include <stdbool.h>
 #include "settings.h"
+#include "audio.h"
 
 typedef struct Map Map;
 typedef struct Data Data;
@@ -37,6 +38,8 @@ typedef struct Character{
 
     float stamina;                                                       // Current stamina of the character
     float max_stamina;                                                   // Maximum stamina of the character
+    float hallucination;                                                 // Current hallucination of the character
+    float max_hallucination;                                             // Maximum hallucination of the character
     bool exhausted;                                                      // Whether the character is too tired to run
     bool needs_shift_reset;                                              // Whether the user must release Shift before running again
     char inventory[MAX_INVENTORY_SIZE][MAX_ITEM_NAME_LENGTH];            // Inventory of the character
@@ -44,10 +47,9 @@ typedef struct Character{
     int inventory_count;                                                 // Number of items in the inventory
 } Character;
 
-
-Character InitCharacter(Settings* game_settings, Data* game_data);                                           // Initialize the character.
-void UpdateCharacter(Character* character, Settings* game_settings, Vector2 map_size, Map* map);             // Update the character.
-void CloseCharacter(Character* character);                                                                   // Close the character.
-void DrawCharacter(Character* character);                                                                    // Draw the character.
+Character InitCharacter(Settings* game_settings, Data* game_data);                                                     // Initialize the character.
+void UpdateCharacter(Character* character, Settings* game_settings, Vector2 map_size, Map* map, Audio* audio, bool is_outdoor);         // Update the character.
+void CloseCharacter(Character* character);                                                                             // Close the character.
+void DrawCharacter(Character* character);                                                                              // Draw the character.
 
 #endif

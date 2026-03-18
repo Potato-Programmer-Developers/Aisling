@@ -19,7 +19,8 @@ typedef struct Settings{
     float mc_speed;                     // Speed of the main character.
     float max_stamina;                  // Maximum stamina of the character.
     float stamina_depletion_rate;       // Rate at which stamina decreases (per second).
-    float stamina_recovery_rate;        // Rate at which stamina increases (per second).
+    float stamina_recovery_rate;         // Rate of stamina recovery
+    float hallucination_increase_rate;   // Rate of hallucination increase
 } Settings;
 
 Settings InitSettings();     // Initializes the game settings.

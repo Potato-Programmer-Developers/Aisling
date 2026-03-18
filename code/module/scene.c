@@ -15,7 +15,7 @@ Scene InitScene(Settings* game_settings){
     new_scene.pause_menu_background = LoadBackground("../assets/images/background/pause/pause.png", game_settings);
     new_scene.settings_background = LoadBackground("../assets/images/background/settings/settings.png", game_settings);
     new_scene.vignette = LoadBackground("../assets/images/background/vignette/vignette.png", game_settings);
-
+    
     return new_scene;
 }
 

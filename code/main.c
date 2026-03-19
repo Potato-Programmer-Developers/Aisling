@@ -14,6 +14,7 @@ Made by Andrew Zhuo, Cornelius Jabez Lim, and Steven Kenneth Darwy
 #include "scene.h"
 #include "settings.h"
 #include "state.h"
+#include "phone.h"
 #include <stdio.h>
 #include "data.h"
 
@@ -42,12 +43,12 @@ int main(void){
     Data game_data = LoadData(&game_settings);
 
     // Load game resources.
-    Character player = InitCharacter(&game_settings, &game_data);
+    Map game_map = InitMap("../assets/map/MAINMAP.json");
+    Character player = InitCharacter(&game_settings, &game_data, &game_map);
     Audio game_audio = InitAudio(&game_settings);
     Scene game_scene = InitScene(&game_settings);
     Interactive game_interactive = InitInteractive(&game_settings);
     Dialogue game_dialogue = LoadDialogue("../assets/text/dialogue1.txt");
-    Map game_map = InitMap("../assets/map/MAINMAP.json");
     NPC worldNPCs[2] = {
         {{{0}, "../assets/images/character/furina.png", {800, 600, 200, 200}, false, INTERACTABLE_TYPE_NPC}, "../assets/text/signpost.txt"},
         {{{0}, "../assets/images/character/oldman.png", {600, 300, 150, 150}, false, INTERACTABLE_TYPE_NPC}, "../assets/text/oldman.txt"},
@@ -120,6 +121,9 @@ void RunGame(Character *player, Audio *game_audio, Settings *game_settings,
         if (IsKeyPressed(KEY_ENTER)) {
             InteractWithObject(objectToInteractWith, current_dialogue, game_state, player);
         }
+
+        // Update phone
+        UpdatePhone(&game_context->phone, GetFrameTime());
 
         // Update game state
         if (UpdateGame(
@@ -199,6 +203,9 @@ void DrawGame(Scene *game_scene, Settings *game_settings,
             DrawText("Press ENTER to continue", GetScreenWidth() - 150,
                     GetScreenHeight() - 30, 10, GRAY);
         }
+
+        // Draw Phone
+        DrawPhone(&game_context->phone);
     }
     EndDrawing();
 }

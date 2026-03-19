@@ -52,6 +52,9 @@ int UpdateGame(GameState* game_state, Interactive* game_interactive,
             }
             ShowCursor();
             break;
+        case DIALOGUE_CUTSCENE:
+            HideCursor();
+            break;
         default:
             break;
     }

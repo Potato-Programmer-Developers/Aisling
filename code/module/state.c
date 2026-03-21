@@ -7,27 +7,43 @@ Made by Steven Kenneth Darwy
 #include "state.h"
 #include "scene.h"
 #include "phone.h"
+#include "interaction.h"
+#include "data.h"
+#include "audio.h"
+#include "interactive.h"
 
-int UpdateGame(GameState* game_state, Interactive* game_interactive, 
-    Character* player, Settings* game_settings, Map* game_map, 
+int UpdateGame(GameState* game_state, Interactive* game_interactive, Character* player, 
+    struct Item *worldItems, int worldItemsCount, Settings* game_settings, Map* game_map, 
     GameContext* game_context, Audio* game_audio, Vector2 map_size, Scene* game_scene){
     /* Update the game state */
     switch(*game_state){
         case MAINMENU:
             UpdateInteractive(game_interactive, game_settings);
-            if (game_interactive->is_play_clicked){
+            if (game_interactive->is_new_game_clicked){
+                // Reset player and world state for new game
+                ResetGameData(player, worldItems, worldItemsCount);
+                
                 *game_state = PHOTO_CUTSCENE;
-                game_interactive->is_play_clicked = false;
+                game_interactive->is_new_game_clicked = false;
                 PauseMusicStream(game_audio->bg_music);
                 PlayMusicStream(game_audio->cutscene_music);
                 SetTargetFPS(30);
                 game_scene->current_cutscene_frame = 0;
                 game_scene->cutscene_timer = 0.0f;
-            }
-            if (game_interactive->is_settings_clicked){
+            } else if (game_interactive->is_continue_clicked){
+                HandleGameData(player, worldItems, worldItemsCount, game_settings);
+
+                *game_state = PHOTO_CUTSCENE; // Or GAMEPLAY if we want to skip intro
+                game_interactive->is_continue_clicked = false;
+                PauseMusicStream(game_audio->bg_music);
+                PlayMusicStream(game_audio->cutscene_music);
+                SetTargetFPS(30);
+                game_scene->current_cutscene_frame = 0;
+                game_scene->cutscene_timer = 0.0f;
+            } else if (game_interactive->is_settings_clicked){
+                game_context->previous_state = *game_state;
                 *game_state = SETTINGS;
-            }
-            if (game_interactive->is_quit_clicked){
+            } else if (game_interactive->is_quit_clicked){
                 return 1;
             }
             ShowCursor();
@@ -56,18 +72,23 @@ int UpdateGame(GameState* game_state, Interactive* game_interactive,
             break;
         case PAUSE:
             UpdateInteractive(game_interactive, game_settings);
-            if (game_interactive->is_play_clicked){
+            if (game_interactive->is_continue_clicked){
                 if (game_context->previous_state == PHOTO_CUTSCENE) {
                     PauseMusicStream(game_audio->bg_music);
                     ResumeMusicStream(game_audio->cutscene_music);
                 }
                 *game_state = game_context->previous_state;
-                game_interactive->is_play_clicked = false;
-            }
-            if (game_interactive->is_settings_clicked){
+                game_interactive->is_continue_clicked = false;
+            } else if (game_interactive->is_settings_clicked){
+                game_context->previous_state = *game_state;
                 *game_state = SETTINGS;
-            }
-            if (game_interactive->is_quit_clicked){
+            } else if (game_interactive->is_main_menu_clicked){
+                SaveData(player, worldItems, worldItemsCount, game_settings);
+                *game_state = MAINMENU;
+                UpdateInteractiveLayout(game_interactive, MAINMENU);
+                game_interactive->is_main_menu_clicked = false;
+            } else if (game_interactive->is_quit_clicked){
+                SaveData(player, worldItems, worldItemsCount, game_settings);
                 return 1;
             }
             ShowCursor();
@@ -75,7 +96,8 @@ int UpdateGame(GameState* game_state, Interactive* game_interactive,
         case SETTINGS:
             UpdateInteractive(game_interactive, game_settings);
             if (IsKeyPressed(KEY_ESCAPE)){
-                *game_state = MAINMENU;
+                *game_state = game_context->previous_state;
+                UpdateInteractiveLayout(game_interactive, *game_state);
             }
             ShowCursor();
             break;

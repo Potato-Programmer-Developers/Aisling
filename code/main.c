@@ -54,7 +54,6 @@ int main(void){
     };
     GameContext game_context = InitGameContext(&game_map, &player, &game_settings);
     GameState game_state = MAINMENU;
-    ApplyData(&player, worldItems, 1, &game_settings, &game_data);
 
     // Initialize NPC and Item textures.
     LoadNPCs(worldNPCs, 2);
@@ -123,6 +122,7 @@ void RunGame(Character *player, Audio *game_audio, Settings *game_settings,
                 }
                 game_context->previous_state = *game_state;
                 *game_state = PAUSE;
+                UpdateInteractiveLayout(game_interactive, PAUSE);
             }
         }
 
@@ -141,7 +141,7 @@ void RunGame(Character *player, Audio *game_audio, Settings *game_settings,
 
         // Update game state
         if (UpdateGame(
-            game_state, game_interactive, player, game_settings, game_map,
+            game_state, game_interactive, player, worldItems, 1, game_settings, game_map,
             game_context, game_audio, map_size, game_scene
         )){
             break;
@@ -149,7 +149,7 @@ void RunGame(Character *player, Audio *game_audio, Settings *game_settings,
 
         // Handle window resize
         if (IsWindowResized()){
-            UpdateInteractiveLayout(game_interactive);
+            UpdateInteractiveLayout(game_interactive, *game_state);
         }
 
         // Draw game assets to the screen

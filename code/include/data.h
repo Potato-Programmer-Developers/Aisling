@@ -23,14 +23,16 @@ typedef struct Data{
     float player_hallucination_level;                                // Level of hallucination of the player
 
     // World state
-    bool picked_up_items[1];              // State of items in the world
+    bool picked_up_items[1];                                         // State of items in the world
 
     // Game settings
-    float volume;            // Volume of the game
+    float volume;                                                    // Volume of the game
 } Data;
 
 Data LoadData(Settings* game_settings);                                          // Load game data
 void ApplyData(Character* player, Item worldItems[], int itemCount, Settings* game_settings, Data* data);          // Apply game data
 void SaveData(Character* player, Item worldItems[], int itemCount, Settings* game_settings);                       // Save game data
+void ResetGameData(Character* player, Item worldItems[], int itemCount);                                           // Reset game data
+void HandleGameData(Character* player, Item worldItems[], int itemCount, Settings* game_settings);                 // Load and handle game data
 
 #endif

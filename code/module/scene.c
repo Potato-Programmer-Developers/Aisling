@@ -70,8 +70,8 @@ void DrawGame(Scene *game_scene, Settings *game_settings,
                 game_dialogue->lines[game_dialogue->current_line];
             DrawText(line, GetScreenWidth() / 2 - MeasureText(line, 20) / 2,
                     GetScreenHeight() - 80, 20, WHITE);
-            DrawText("Press 'SPACE' to continue", GetScreenWidth() - 150,
-                    GetScreenHeight() - 30, 10, GRAY);
+            DrawText("Press 'SPACE' to continue", GetScreenWidth() - 300,
+                    GetScreenHeight() - 40, 20, GRAY);
         }
 
         // Draw Phone
@@ -87,20 +87,28 @@ void DrawMainMenu(Scene* scene, Interactive* game_interactive){
         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
         (Vector2){0, 0}, 0.0f, WHITE);
     
+    // Draw New Game button
+    DrawTexture(
+        game_interactive->new_game_button,
+        game_interactive->new_game_bounds.x, 
+        game_interactive->new_game_bounds.y, 
+        game_interactive->is_new_game_hovered ? GRAY : WHITE
+    );
+
+    // Draw Continue button
+    DrawTexture(
+        game_interactive->continue_button,
+        game_interactive->continue_bounds.x, 
+        game_interactive->continue_bounds.y, 
+        game_interactive->is_continue_hovered ? GRAY : WHITE
+    );
+
     // Draw Settings button
     DrawTexture(
         game_interactive->settings_button,
         game_interactive->settings_bounds.x, 
         game_interactive->settings_bounds.y, 
         game_interactive->is_settings_hovered ? GRAY : WHITE
-    );
-    
-    // Draw Play button
-    DrawTexture(
-        game_interactive->play_button,
-        game_interactive->play_bounds.x, 
-        game_interactive->play_bounds.y, 
-        game_interactive->is_play_hovered ? GRAY : WHITE
     );
     
     // Draw Quit button
@@ -121,6 +129,14 @@ void DrawPauseMenu(Scene* scene, Settings* game_settings, Interactive* game_inte
         (Rectangle){0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()},
         (Vector2){0, 0}, 0.0f, WHITE);
     
+    // Draw Continue button
+    DrawTexture(
+        game_interactive->continue_button,
+        game_interactive->continue_bounds.x, 
+        game_interactive->continue_bounds.y, 
+        game_interactive->is_continue_hovered ? GRAY : WHITE
+    );
+
     // Draw Settings button
     DrawTexture(
         game_interactive->settings_button,
@@ -128,15 +144,15 @@ void DrawPauseMenu(Scene* scene, Settings* game_settings, Interactive* game_inte
         game_interactive->settings_bounds.y, 
         game_interactive->is_settings_hovered ? GRAY : WHITE
     );
-    
-    // Draw Play button
+
+    // Draw Main Menu button
     DrawTexture(
-        game_interactive->play_button,
-        game_interactive->play_bounds.x, 
-        game_interactive->play_bounds.y, 
-        game_interactive->is_play_hovered ? GRAY : WHITE
+        game_interactive->main_menu_button,
+        game_interactive->main_menu_bounds.x, 
+        game_interactive->main_menu_bounds.y, 
+        game_interactive->is_main_menu_hovered ? GRAY : WHITE
     );
-    
+
     // Draw Quit button
     DrawTexture(
         game_interactive->quit_button,

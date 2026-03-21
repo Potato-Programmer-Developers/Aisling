@@ -84,3 +84,24 @@ void SaveData(Character* player, Item worldItems[], int itemCount, Settings* gam
     // Save the data
     SaveFileData("../data/data.dat", &data, sizeof(Data));
 }
+
+void ResetGameData(Character* player, Item worldItems[], int itemCount){
+    /* Reset the data */
+    player->position = (Vector2){ 450.0f, 1200.0f };
+    player->inventory_count = 0;
+    player->hallucination = 0.0f;
+    player->direction = 0;
+    for (int i = 0; i < itemCount; i++){
+        worldItems[i].picked_up = false;
+    }
+}
+
+void HandleGameData(Character* player, Item worldItems[], int itemCount, Settings* game_settings){
+    /* Handle the data */
+    Data data = LoadData(game_settings);
+    if (data.position.x == -1.0f){
+        ResetGameData(player, worldItems, itemCount);
+    } else{
+        ApplyData(player, worldItems, itemCount, game_settings, &data);
+    }
+}

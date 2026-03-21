@@ -1,9 +1,12 @@
-/*
-This file contains variable declarations and function prototypes for the
-mc module.
-
-Module made by Andrew Zhuo.
-*/
+/**
+ * @file character.h
+ * @brief Player character definitions and movement logic.
+ * 
+ * This module defines the main character's state (stamina, hallucination),
+ * animation frames, inventory, and movement functions.
+ * 
+ * Authors: Andrew Zhuo
+ */
 
 #ifndef CHARACTER_H
 #define CHARACTER_H
@@ -18,38 +21,72 @@ Module made by Andrew Zhuo.
 typedef struct Map Map;
 typedef struct Data Data;
 
-typedef struct Character{
-    /* Struct for character */
-    Texture2D sprite_idle;               // Idle sprite of the character
-    Texture2D sprite_walk;               // Walk sprite of the character
-    Texture2D sprite_run;                // Run sprite of the character
-    Texture2D sprite;                    // Current sprite of the character
-    Vector2 position;                    // Position of the character
-    Vector2 size;                        // Size of the character
-    float speed;                         // Speed of the character
-    int direction;                       // Direction the character is facing
+/**
+ * @brief Represents the player character and all associated state.
+ */
+typedef struct Character {
+    // --- Animation and Graphics ---
+    Texture2D sprite_idle;               // Texture for idle state
+    Texture2D sprite_walk;               // Texture for walking state
+    Texture2D sprite_run;                // Texture for running state
+    Texture2D sprite;                    // Current active texture being drawn
+    Vector2 position;                    // World coordinates of the player
+    Vector2 size;                        // Visual size of the character
+    float speed;                         // Current movement velocity
+    int direction;                       // Facing direction (used for flipping sprites)
 
-    Rectangle frame_rect;                // Rectangle for the current frame
-    Rectangle bounds;                    // Rectangle for the character's bounds
-    int frame_number;                    // Number of frames in the sprite
-    int current_frame;                   // Current frame of the sprite
-    int frame_counter;                   // Counter for the current frame
-    int frame_speed;                     // Speed of the sprite animation
+    // --- Animation Logic ---
+    Rectangle frame_rect;                // Source rectangle for current frame in sprite sheet
+    Rectangle bounds;                    // Collision/Hitbox rectangle
+    int frame_number;                    // Total frames in current animation
+    int current_frame;                   // Index of current animation frame
+    int frame_counter;                   // Counter for frame speed logic
+    int frame_speed;                     // Animation play speed
 
-    float stamina;                                                       // Current stamina of the character
-    float max_stamina;                                                   // Maximum stamina of the character
-    float hallucination;                                                 // Current hallucination of the character
-    float max_hallucination;                                             // Maximum hallucination of the character
-    bool exhausted;                                                      // Whether the character is too tired to run
-    bool needs_shift_reset;                                              // Whether the user must release Shift before running again
-    char inventory[MAX_INVENTORY_SIZE][MAX_ITEM_NAME_LENGTH];            // Inventory of the character
-    int item_count[MAX_INVENTORY_SIZE];                                  // Number of each item in the inventory
-    int inventory_count;                                                 // Number of items in the inventory
+    // --- Gameplay Mechanics ---
+    float stamina;                       // Current energy for running
+    float max_stamina;                   // Maximum energy capacity
+    float hallucination;                 // Current hallucination level (horror mechanic)
+    float max_hallucination;             // Maximum hallucination threshold
+    bool exhausted;                      // Flag set when stamina reaches 0, preventing run
+    bool needs_shift_reset;              // Mechanic requiring Shift key release after exhaustion
+
+    // --- Inventory System ---
+    char inventory[MAX_INVENTORY_SIZE][MAX_ITEM_NAME_LENGTH]; // Names of items currently held
+    int item_count[MAX_INVENTORY_SIZE];                       // Quantities of each unique item
+    int inventory_count;                                      // Total number of unique items in inventory
 } Character;
 
-Character InitCharacter(Settings* game_settings, Data* game_data, Map* game_map);                                                     // Initialize the character.
-void UpdateCharacter(Character* character, Settings* game_settings, Vector2 map_size, Map* map, Audio* audio, bool is_outdoor);         // Update the character.
-void CloseCharacter(Character* character);                                                                             // Close the character.
-void DrawCharacter(Character* character);                                                                              // Draw the character.
+/**
+ * @brief Initializes character state and loads textures.
+ * @param game_settings Pointer to settings for initial spawn and speed.
+ * @param game_data Pointer to loaded progress to restore state.
+ * @param game_map Pointer to map for initial positioning.
+ * @return An initialized Character structure.
+ */
+Character InitCharacter(Settings* game_settings, Data* game_data, Map* game_map);
+
+/**
+ * @brief Updates movement, animation, and stamina based on input.
+ * @param character Pointer to the player character.
+ * @param game_settings Pointer to game settings.
+ * @param map_size Total dimensions of the world for clamping.
+ * @param map Pointer to map for collision detection.
+ * @param audio Pointer to audio system for footstep sounds.
+ * @param is_outdoor Flag to determine which footstep sounds to play.
+ */
+void UpdateCharacter(Character* character, Settings* game_settings, Vector2 map_size, Map* map, Audio* audio, bool is_outdoor);
+
+/**
+ * @brief Unloads all character textures and frees resources.
+ * @param character Pointer to the character to clean up.
+ */
+void CloseCharacter(Character* character);
+
+/**
+ * @brief Draws the character at their current position/frame.
+ * @param character Pointer to the character to draw.
+ */
+void DrawCharacter(Character* character);
 
 #endif

@@ -1,38 +1,48 @@
-/*
-This file contains function implementations for the interaction module.
-
-Module made by Andrew Zhuo and Cornelius Jabez Lim.
-*/
+/**
+ * @file interaction.c
+ * @brief Implementation of world interaction logic (NPCs, Items).
+ * 
+ * Handles loading world objects, checking proximity-based collisions,
+ * and dispatching interaction events (dialogue or inventory pickup).
+ * 
+ * Authors: Andrew Zhuo and Cornelius Jabez Lim
+ */
 
 #include "interaction.h"
 #include <string.h>
 #include "raymath.h"
 
+/** @brief Loads textures for an array of NPCs using their pre-defined paths. */
 void LoadNPCs(NPC npcs[], int count){
-    /* Load NPCs */
     for (int i = 0; i < count; i++){
         npcs[i].base.texture = LoadTexture(npcs[i].base.texturePath);
     }
 }
 
+/** @brief Loads textures for an array of Items using their pre-defined paths. */
 void LoadItems(Item items[], int count){
-    /* Load items */
     for (int i = 0; i < count; i++){
         items[i].base.texture = LoadTexture(items[i].base.texturePath);
     }
 }
 
+/**
+ * @brief Scans for the nearest interactable object within collision range.
+ * 
+ * Uses distance-to-center calculation after detection to ensure the player
+ * interacts with the most relevant object when multiple are overlapping.
+ */
 void CheckInteractable(NPC worldNPCs[], Item worldItems[], int npcCount, int itemCount,
     Rectangle playerHitbox, Interactable** objectToInteractWith){
-    /* Check if the player is colliding with any interactable objects. */
+    
     *objectToInteractWith = NULL;
-    float min_dist = 1e6; // Large number
+    float min_dist = 1e6; // Sentinel
     Vector2 playerPos = {playerHitbox.x + playerHitbox.width / 2.0f, playerHitbox.y + playerHitbox.height / 2.0f};
 
+    // 1. Check Collision with NPCs
     for (int i = 0; i < npcCount; i++){
-        // Check collision with NPCs
         if (CheckCollisionRecs(playerHitbox, worldNPCs[i].base.bounds)){
-            worldNPCs[i].base.isActive = true;
+            worldNPCs[i].base.isActive = true; // Signals we can interact
             Vector2 npcPos = {worldNPCs[i].base.bounds.x + worldNPCs[i].base.bounds.width / 2.0f, 
                                worldNPCs[i].base.bounds.y + worldNPCs[i].base.bounds.height / 2.0f};
             float dist = Vector2Distance(playerPos, npcPos);
@@ -40,13 +50,14 @@ void CheckInteractable(NPC worldNPCs[], Item worldItems[], int npcCount, int ite
                 min_dist = dist;
                 *objectToInteractWith = (Interactable*)&worldNPCs[i];
             }
-        } else{
+        } else {
             worldNPCs[i].base.isActive = false;
         }
     }
 
+    // 2. Check Collision with Items
     for (int i = 0; i < itemCount; i++){
-        // Check collision with items
+        // Exclude items already in pockets
         if (!worldItems[i].picked_up && CheckCollisionRecs(playerHitbox, worldItems[i].base.bounds)){
             worldItems[i].base.isActive = true;
             Vector2 itemPos = {worldItems[i].base.bounds.x + worldItems[i].base.bounds.width / 2.0f, 
@@ -56,24 +67,30 @@ void CheckInteractable(NPC worldNPCs[], Item worldItems[], int npcCount, int ite
                 min_dist = dist;
                 *objectToInteractWith = (Interactable*)&worldItems[i];
             }
-        } else{
+        } else {
             worldItems[i].base.isActive = false;
         }
     }
 }
 
+/**
+ * @brief High-level dispatcher for the 'Interact' command (e.g. Spacebar).
+ * 
+ * If already in a cutscene, advances the dialogue.
+ * Otherwise, triggers type-specific interaction for the target object.
+ */
 void InteractWithObject(Interactable* objectToInteractWith, Dialogue* game_dialogue, 
     GameState* game_state, Character *player){
-    /* Handle interaction based on the type of the object. */
+    
+    // Advancement Logic: if we are talking, we just move to next line
     if (*game_state == DIALOGUE_CUTSCENE) {
         InteractWithNPC(NULL, game_dialogue, game_state);
         return;
     }
 
-    if (objectToInteractWith == NULL) {
-        return;
-    }
+    if (objectToInteractWith == NULL) return;
 
+    // Type Dispatch
     switch (objectToInteractWith->type){
         case INTERACTABLE_TYPE_NPC:
             InteractWithNPC((NPC*)objectToInteractWith, game_dialogue, game_state);
@@ -84,31 +101,38 @@ void InteractWithObject(Interactable* objectToInteractWith, Dialogue* game_dialo
     }
 }
 
+/**
+ * @brief Handles dialogue logic: loading scripts and advancing lines.
+ */
 void InteractWithNPC(NPC *npc, Dialogue *game_dialogue, GameState *game_state){
-    /* Handle interaction with NPCs. */
     if (*game_state == GAMEPLAY && npc != NULL){
-        // Load dialogue from the object to interact with
+        // Phase A: Init Conversation
         *game_dialogue = LoadDialogue(npc->dialoguePath);
 
-        // Enter dialogue cutscene if there are lines to display
+        // Enter state only if script is non-empty
         if (game_dialogue->line_count > 0){
             *game_state = DIALOGUE_CUTSCENE;
         }
     } else if (*game_state == DIALOGUE_CUTSCENE){
-        // Increment first
+        // Phase B: Advance Line
         game_dialogue->current_line++;
 
-        // If it has reached or passed the line count, go back to gameplay
+        // Phase C: Exit condition
         if (game_dialogue->current_line >= game_dialogue->line_count){
             *game_state = GAMEPLAY;
         }
     }
 }
 
+/**
+ * @brief Transfers an item from the game world to the player's inventory.
+ */
 void InteractWithItem(Item *item, Character *player){
-    /* Handle interaction with items. */
+    // Stage 1 Simplification: use texture path as ID
     strcpy(player->inventory[player->inventory_count], item->base.texturePath);
     player->item_count[player->inventory_count]++;
     player->inventory_count++;
+    
+    // Remove from the world renderer
     item->picked_up = true;
 }

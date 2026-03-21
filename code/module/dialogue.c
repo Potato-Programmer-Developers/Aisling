@@ -1,14 +1,27 @@
-/*
-This file contains functions for the dialogue module.
-
-Module made by Cornelius Jabez Lim.
-*/
+/**
+ * @file dialogue.c
+ * @brief Implementation of the dialogue loading and parsing system.
+ * 
+ * Handles file I/O for narrative text files, sanitizing strings by 
+ * removing newlines and enforcing line limits.
+ * 
+ * Authors: Cornelius Jabez Lim
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "dialogue.h"
 
+/**
+ * @brief Opens and parses a dialogue text file.
+ * 
+ * Reads lines sequentially using fgets. Sanitizes input by truncating
+ * newline characters.
+ * 
+ * @param filename Path to the .txt file.
+ * @return Initialized Dialogue struct with loaded lines.
+ */
 Dialogue LoadDialogue(const char* filename)
 {
     Dialogue dialogue = {0};

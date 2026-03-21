@@ -1,8 +1,12 @@
-/*
-This file contains the enum for the states of the game.
-
-Made by Steven Kenneth Darwy.
-*/
+/**
+ * @file state.h
+ * @brief Core game state machine and state transition logic.
+ * 
+ * Defines the various operational modes of the game (Menu, Play, Pause)
+ * and the primary update loop dispatcher.
+ * 
+ * Authors: Steven Kenneth Darwy
+ */
 
 #ifndef STATE_H
 #define STATE_H
@@ -16,17 +20,26 @@ struct Interactive;                  // Forward declaration
 struct Item;                         // Forward declaration
 typedef struct Scene Scene;          // Forward declaration
 
+/**
+ * @brief Defines all possible major logical states of the application.
+ */
 typedef enum {
-	/* This enum contains the states of the game. */
-	MAINMENU,          // Main menu state
-	GAMEPLAY,          // Gameplay state
-	PAUSE,             // Pause state
-	SETTINGS,          // Settings state
-	DIALOGUE_CUTSCENE, // Dialogue cutscene state
-	PHOTO_CUTSCENE     // Photo cutscene state
+	MAINMENU,          // Start screen with New Game/Options/Quit
+	GAMEPLAY,          // Active player-controlled world exploration
+	PAUSE,             // Interrupted gameplay with menu overlay
+	SETTINGS,          // Configuration sub-menu
+	DIALOGUE_CUTSCENE, // Locked state focused on text interaction
+	PHOTO_CUTSCENE     // Non-interactive animated sequence
 } GameState;
 
-// Update the game state
+/**
+ * @brief The primary update dispatcher for the entire game.
+ * 
+ * Based on the current GameState, this function calls specific module
+ * updates (Character, Phone, Interactive, etc.).
+ * 
+ * @return 1 if the game should exit (e.g., Quit clicked), 0 to continue.
+ */
 int UpdateGame(
 	GameState *game_state, struct Interactive *game_interactive, Character *player,
 	struct Item *worldItems, int worldItemsCount, Settings *game_settings, Map *game_map,

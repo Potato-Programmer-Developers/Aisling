@@ -1,28 +1,37 @@
-/*
-This file contains variable declarations and function prototypes for the
-settings module.
-
-Module made by Andrew Zhuo.
-*/
+/**
+ * @file settings.h
+ * @brief Global game configuration and difficulty parameters.
+ * 
+ * Provides a centralized place to manage window dimensions, gameplay
+ * balancer (speed, stamina), and other user-configurable settings.
+ * 
+ * Authors: Andrew Zhuo
+ */
 
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
 #include "raylib.h"
 
-typedef struct Settings{
-    /* This struct contains the information for the settings in the game. */
-    int window_width;                   // Width of the game window.
-    int window_height;                  // Height of the game window.
-    int fps;                            // Frames per second.
-    float game_volume;                  // Volume of the game.
-    float mc_speed;                     // Speed of the main character.
-    float max_stamina;                  // Maximum stamina of the character.
-    float stamina_depletion_rate;       // Rate at which stamina decreases (per second).
-    float stamina_recovery_rate;         // Rate of stamina recovery
-    float hallucination_increase_rate;   // Rate of hallucination increase
+/**
+ * @brief Stores configuration values for the engine and gameplay logic.
+ */
+typedef struct Settings {
+    int window_width;                    // Initial width of the Raylib window
+    int window_height;                   // Initial height of the Raylib window
+    int fps;                             // Target frames per second
+    float game_volume;                   // Global audio volume multiplier (0.0 - 1.0)
+    float mc_speed;                      // Base movement speed for the main character
+    float max_stamina;                   // Total stamina capacity
+    float stamina_depletion_rate;        // Amount of stamina lost per second of running
+    float stamina_recovery_rate;         // Amount of stamina gained per second of idling
+    float hallucination_increase_rate;   // Rate of automatic hallucination growth
 } Settings;
 
-Settings InitSettings();     // Initializes the game settings.
+/**
+ * @brief Loads default settings (or potentially from a config file).
+ * @return A Settings structure populated with default values.
+ */
+Settings InitSettings();
 
 #endif

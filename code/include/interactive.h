@@ -1,50 +1,86 @@
-/*
-This file contains function prototypes for the interactive elements in
-the game.
-
-Module made by Andrew Zhuo.
-*/
+/**
+ * @file interactive.h
+ * @brief UI elements and interactive menu system.
+ * 
+ * Handles buttons, sliders, and other graphical user interface elements
+ * for the main menu, settings, and pause screens.
+ * 
+ * Authors: Andrew Zhuo
+ */
 
 #ifndef INTERACTIVE_H
 #define INTERACTIVE_H
 
+#include "raylib.h"
 #include "settings.h"
+#include "state.h"
 
-typedef struct Interactive{
-    /* This struct contains the information for interactive elements in the game. */
-    
-    // Textures for the interactive elements
-    Texture2D play_button;       // Play button texture.
-    Texture2D settings_button;   // Settings button texture.
-    Texture2D quit_button;       // Quit button texture.
+/**
+ * @brief Container for all UI elements and their interaction states.
+ */
+typedef struct Interactive {
+    // --- Button Textures ---
+    Texture2D new_game_button;   // Texture for 'New Game'
+    Texture2D continue_button;   // Texture for 'Continue'
+    Texture2D main_menu_button;  // Texture for 'Main Menu'
+    Texture2D settings_button;   // Texture for 'Settings'
+    Texture2D quit_button;       // Texture for 'Quit'
 
-    // Button bounds
-    Rectangle play_bounds;       // Play button bounds.
-    Rectangle settings_bounds;   // Settings button bounds.
-    Rectangle quit_bounds;       // Quit button bounds.
+    // --- Button Layout ---
+    Rectangle new_game_bounds;   // Hitbox for 'New Game' button
+    Rectangle continue_bounds;   // Hitbox for 'Continue' button
+    Rectangle main_menu_bounds;  // Hitbox for 'Main Menu' button
+    Rectangle settings_bounds;   // Hitbox for 'Settings' button
+    Rectangle quit_bounds;       // Hitbox for 'Quit' button
 
-    // Interaction flags
-    bool is_play_clicked;        // Whether the play button is clicked.
-    bool is_settings_clicked;    // Whether the settings button is clicked.
-    bool is_quit_clicked;        // Whether the quit button is clicked.
+    // --- Interaction State ---
+    bool is_new_game_clicked;    // True if button was clicked this frame
+    bool is_continue_clicked;    
+    bool is_main_menu_clicked;   
+    bool is_settings_clicked;    
+    bool is_quit_clicked;        
 
-    bool is_play_hovered;        // Whether the play button is hovered.
-    bool is_settings_hovered;    // Whether the settings button is hovered.
-    bool is_quit_hovered;        // Whether the quit button is hovered.
+    bool is_new_game_hovered;    // True if mouse is over button
+    bool is_continue_hovered;    
+    bool is_main_menu_hovered;   
+    bool is_settings_hovered;    
+    bool is_quit_hovered;        
 
-    // Slider bounds, size, and state
-    Rectangle volume_slider_bar;   // Volume slider bar bounds.
-    Rectangle volume_slider_knob;  // Volume slider knob bounds.
-    float bar_width;               // Volume slider bar width.
-    float bar_height;              // Volume slider bar height.
-    float knob_width;              // Volume slider knob width.
-    float knob_height;             // Volume slider knob height.
-    bool is_volume_moving;         // Whether the volume slider is moving.
+    // --- Volume Slider ---
+    Rectangle volume_slider_bar;   // Visual bar of the slider
+    Rectangle volume_slider_knob;  // Draggable handle of the slider
+    float bar_width;               
+    float bar_height;              
+    float knob_width;              
+    float knob_height;             
+    bool is_volume_moving;         // True if user is currently dragging the knob
 } Interactive;
 
-Interactive InitInteractive(Settings* game_settings);                             // Initializes the interactive elements.
-void UpdateInteractive(Interactive* interactive, Settings* game_settings);        // Updates the interactive elements.
-void UpdateInteractiveLayout(Interactive* interactive);                           // Updates the layout of interactive elements.
-void CloseInteractive(Interactive* interactive);                                  // Closes the interactive elements.
+/**
+ * @brief Loads UI textures and initializes default button positions.
+ * @param game_settings Pointer to settings for initial layout.
+ * @return An initialized Interactive structure.
+ */
+Interactive InitInteractive(Settings* game_settings);
+
+/**
+ * @brief Updates hover and click states based on mouse position/input.
+ * @param interactive Pointer to the UI container.
+ * @param game_settings Pointer to settings.
+ */
+void UpdateInteractive(Interactive* interactive, Settings* game_settings);
+
+/**
+ * @brief Adjusts UI layout based on current game state (e.g., resizing window).
+ * @param interactive Pointer to the UI container.
+ * @param game_state Current state to determine which buttons to show.
+ */
+void UpdateInteractiveLayout(Interactive* interactive, int game_state);
+
+/**
+ * @brief Unloads UI textures and frees resources.
+ * @param interactive Pointer to the UI container to clean up.
+ */
+void CloseInteractive(Interactive* interactive);
 
 #endif

@@ -1,9 +1,11 @@
-/*
-This file contains the declaration of the variable and functions
-contained in the map.c file.
-
-Module made by Andrew Zhuo.
-*/
+/**
+ * @file map.h
+ * @brief Declarations for Tiled map loading and spatial collision queries.
+ * 
+ * Handles management of tilesets and interactions with the cute_tiled library.
+ * 
+ * Authors: Andrew Zhuo
+ */
 
 #ifndef MAP_H
 #define MAP_H
@@ -13,16 +15,27 @@ Module made by Andrew Zhuo.
 
 #define MAX_TILESETS 20
 
+/**
+ * @brief Representation of the game world layer.
+ * 
+ * Stores the parsed Tiled map structure and its corresponding GL textures.
+ */
 typedef struct Map{
-    /* The tiled map. */
-    cute_tiled_map_t* tiled_map;              // The textures of the map
-    Texture2D textures[MAX_TILESETS];         // The number of tilesets
-    int tileset_count;                        // The number of tilesets
+    cute_tiled_map_t* tiled_map;              // Parsed Tiled JSON structure
+    Texture2D textures[MAX_TILESETS];         // VRAM textures for tilesets
+    int tileset_count;                        // Number of active textures
 } Map;
 
-Map InitMap(const char* path);                              // Initialize the map
-void DrawMap(Map* map);                                     // Draw the map
-void FreeMap(Map* map);                                     // Free the map
-bool CheckMapCollision(Map* map, Rectangle rect);           // Check if a rectangle collides with map objects
+/** @brief Loads Tiled map and tileset images. */
+Map InitMap(const char* path);
+
+/** @brief Renders the map layers using Raylib textures. */
+void DrawMap(Map* map);
+
+/** @brief Deallocates map textures and Tiled memory. */
+void FreeMap(Map* map);
+
+/** @brief Performs AABB collision check against map objects. */
+bool CheckMapCollision(Map* map, Rectangle rect);
 
 #endif

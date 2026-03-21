@@ -1,29 +1,71 @@
-/*
-This file contains function prototypes for the audio module.
-
-Module made by Andrew Zhuo.
-*/
+/**
+ * @file audio.h
+ * @brief Function prototypes and structures for the audio management system.
+ * 
+ * This module handles the loading, playing, and updating of music and sound effects
+ * used throughout the game, including background music, cutscene audio, and spatial sounds.
+ * 
+ * Authors: Andrew Zhuo
+ */
 
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include "raylib.h"
 #include "settings.h"
 
-typedef struct Audio{
-    /* This struct contains the information for audio in the game. */
-    Music bg_music;             // Background music
-    Sound scream_sound;         // Scream sound
-    Sound step_outdoor;         // Outdoor walking sound
-    Sound step_indoor;          // Indoor walking sound
-    Sound notif_sound;          // Notification sound
-    Music cutscene_music;       // Cutscene audio
+/**
+ * @brief Container for all audio resources used in the game.
+ * 
+ * This structure holds Raylib Music and Sound objects, allowing centralized
+ * management of all game audio.
+ */
+typedef struct Audio {
+    Music bg_music;             // Main background music stream
+    Sound scream_sound;         // Dramatic scream sound effect
+    Sound step_outdoor;         // Walking sound on outdoor surfaces
+    Sound step_indoor;          // Walking sound on indoor surfaces
+    Sound notif_sound;          // Phone notification alert sound
+    Music cutscene_music;       // Specialized music for animated cutscenes
 } Audio;
 
-Audio InitAudio(Settings* game_settings);              // Initializes the game's audio.
-void UpdateAudio(Audio* audio);                        // Keep updating background music buffer.
-void CloseAudio(Audio* audio);                         // Close the audio device.
-void PlayScream(Audio* audio);                         // Play the scream sound.
-void PlayStep(Audio* audio, bool is_outdoor);          // Play the walking sound.
-void PlayNotif(Audio* audio);                          // Play the notification sound.
+/**
+ * @brief Initializes the audio device and loads all sound assets.
+ * @param game_settings Pointer to settings containing volume and paths.
+ * @return An initialized Audio structure with loaded assets.
+ */
+Audio InitAudio(Settings* game_settings);
+
+/**
+ * @brief Updates music stream buffers to keep them playing smoothly.
+ * Should be called once per frame in the main game loop.
+ * @param audio Pointer to the audio container.
+ */
+void UpdateAudio(Audio* audio);
+
+/**
+ * @brief Unloads all audio assets and closes the audio device.
+ * @param audio Pointer to the audio container to clean up.
+ */
+void CloseAudio(Audio* audio);
+
+/**
+ * @brief Plays the scream sound effect immediately.
+ * @param audio Pointer to the audio container.
+ */
+void PlayScream(Audio* audio);
+
+/**
+ * @brief Plays a footstep sound based on the player's environment.
+ * @param audio Pointer to the audio container.
+ * @param is_outdoor True to play outdoor sound, false for indoor.
+ */
+void PlayStep(Audio* audio, bool is_outdoor);
+
+/**
+ * @brief Plays the notification sound effect.
+ * @param audio Pointer to the audio container.
+ */
+void PlayNotif(Audio* audio);
 
 #endif

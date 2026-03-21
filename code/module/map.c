@@ -1,8 +1,12 @@
-/*
-This file contains the logic for the map.
-
-Made by Andrew Zhuo.
-*/
+/**
+ * @file map.c
+ * @brief Implementation of the Tiled map system and collision physics.
+ * 
+ * Integrates cute_tiled to parse .json exports from Tiled. Handles 
+ * multi-layered rendering and object-layer collision checks.
+ * 
+ * Authors: Andrew Zhuo
+ */
 
 #define CUTE_TILED_IMPLEMENTATION
 
@@ -10,17 +14,21 @@ Made by Andrew Zhuo.
 #include <stdio.h>
 #include "map.h"
 
+/**
+ * @brief Loads a Tiled map JSON file and its associated tileset textures.
+ * 
+ * @param path FS path to the .json map file.
+ * @return Populated Map struct with VRAM textures and cute_tiled handle.
+ */
 Map InitMap(const char* path){
-    /* Initialize the map. */
-
-    // Initialize and load the map.
     Map map = {0};
     map.tiled_map = cute_tiled_load_map_from_file(path, NULL);
 
-    // Load the tilesets.
+    // Load each tileset referenced by the map
     cute_tiled_tileset_t* tileset = map.tiled_map->tilesets;
     while (tileset && map.tileset_count < MAX_TILESETS){
         char fullPath[256];
+        // Note: cute_tiled provides relative paths; we prefix with our assets folder
         snprintf(fullPath, sizeof(fullPath), "../assets/map/%s", tileset->image.ptr);
         map.textures[map.tileset_count] = LoadTexture(fullPath);
         map.tileset_count++;
@@ -30,24 +38,24 @@ Map InitMap(const char* path){
     return map;
 }
 
+/**
+ * @brief Renders the tile layers of the map.
+ * 
+ * Iterates through layers, identifies tiles by Global ID (GID), and 
+ * handles Tiled's bit-flagged transformations (horiz/vert/diag flips).
+ */
 void DrawMap(Map* map){
-    /* Draw the map. */
-
-    // Loop through the layers
     cute_tiled_layer_t* layer = map->tiled_map->layers;
     while (layer){
-        // Only draw the tile layer
+        // We only render 'tilelayer' types here; 'objectgroup' is used for physics
         if (strcmp(layer->type.ptr, "tilelayer") == 0){
-            // For each tile in the layer
             for (int i = 0; i < layer->data_count; i++){
-                // Get the raw tile ID and split the flags
                 unsigned int raw_gid = (unsigned int)layer->data[i];
-                int gid = cute_tiled_unset_flags(raw_gid);
+                int gid = cute_tiled_unset_flags(raw_gid); // Extract ID from flags
 
-                // Skip if the tile ID is 0
-                if (gid == 0) continue;
+                if (gid == 0) continue; // 0 is an empty tile
 
-                // Find the correct tileset and texture
+                // 1. Find the parent tileset for this GID
                 cute_tiled_tileset_t* tileset = map->tiled_map->tilesets;
                 int tileset_idx = 0;
                 while (tileset) {
@@ -58,6 +66,7 @@ void DrawMap(Map* map){
                     tileset_idx++;
                 }
 
+                // 2. Calculate source/dest geometry
                 if (tileset && tileset_idx < map->tileset_count){
                     int id = gid - tileset->firstgid;
                     int tx = (id % tileset->columns) * tileset->tilewidth;
@@ -66,29 +75,27 @@ void DrawMap(Map* map){
                     int x = i % layer->width;
                     int y = i / layer->width;
 
+                    // 3. Handle Bitwise Flip Flags
                     bool flip_h = (raw_gid & CUTE_TILED_FLIPPED_HORIZONTALLY_FLAG) != 0;
                     bool flip_v = (raw_gid & CUTE_TILED_FLIPPED_VERTICALLY_FLAG) != 0;
                     bool flip_d = (raw_gid & CUTE_TILED_FLIPPED_DIAGONALLY_FLAG) != 0;
 
                     float rotation = 0.0f;
 
+                    // Diagonal flip in Tiled indicates rotation + flipping
                     if (flip_d){
                         if (flip_h && flip_v){
                             rotation = 90.0f;
-                            flip_h = true;
-                            flip_v = false;
+                            flip_h = true; flip_v = false;
                         } else if (flip_h){
                             rotation = 90.0f;
-                            flip_h = false;
-                            flip_v = false;
+                            flip_h = false; flip_v = false;
                         } else if (flip_v){
                             rotation = -90.0f;
-                            flip_h = false;
-                            flip_v = false;
+                            flip_h = false; flip_v = false;
                         } else{
                             rotation = 90.0f;
-                            flip_h = false;
-                            flip_v = true;
+                            flip_h = false; flip_v = true;
                         }
                     }
 
@@ -96,11 +103,11 @@ void DrawMap(Map* map){
                     if (flip_h) source.width = -source.width;
                     if (flip_v) source.height = -source.height;
 
+                    // Destination centered for rotation support
                     Rectangle dest = {
                         (float)(x * tileset->tilewidth) + tileset->tilewidth / 2.0f,
                         (float)(y * tileset->tileheight) + tileset->tileheight / 2.0f,
-                        (float)tileset->tilewidth,
-                        (float)tileset->tileheight
+                        (float)tileset->tilewidth, (float)tileset->tileheight
                     };
 
                     Vector2 origin = {tileset->tilewidth / 2.0f, tileset->tileheight / 2.0f};
@@ -113,38 +120,31 @@ void DrawMap(Map* map){
     }
 }
 
+/** @brief Deallocates map textures and the parsed Tiled map object. */
 void FreeMap(Map* map){
-    /* Free the map. */
     for (int i = 0; i < map->tileset_count; i++){
         UnloadTexture(map->textures[i]);
     }
     cute_tiled_free_map(map->tiled_map);
 }
 
+/**
+ * @brief Spatial query: checks if a world-space rectangle hits a collision object.
+ * 
+ * Scans Tiled 'objectgroup' layers for rectangles. 
+ * Essential for player-vs-wall collisions.
+ */
 bool CheckMapCollision(Map* map, Rectangle rect){
-    /* Check if a rectangle collides with map objects. */
-    
-    // Loop through the layers
     cute_tiled_layer_t* layer = map->tiled_map->layers;
     while (layer){
-        // Only check the object layer
         if (strcmp(layer->type.ptr, "objectgroup") == 0){
-            // For each object in the layer
             cute_tiled_object_t* object = layer->objects;
             while (object){
-                // Tiled objects have x, y, width, height.
-                Rectangle object_rect = {
-                    object->x, 
-                    object->y, 
-                    object->width, 
-                    object->height
-                };
+                Rectangle object_rect = { object->x, object->y, object->width, object->height };
 
-                // Check for collision
                 if (CheckCollisionRecs(rect, object_rect)){
                     return true;
                 }
-
                 object = object->next;
             }
         }

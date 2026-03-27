@@ -129,15 +129,19 @@ void DrawPhone(Phone *phone){
  * Uses 'R' as the primary interact key and 'ENTER' for replying.
  */
 void HandlePhoneInput(Phone *phone){
+    // Toggle Open/Close
+    if (IsKeyPressed(KEY_R)){
+        if (phone->state == PHONE_IDLE || phone->state == PHONE_NOTIFICATION) {
+            phone->state = PHONE_OPENED;
+        } else {
+            phone->state = PHONE_IDLE;
+        }
+        return;
+    }
+
     if (phone->state == PHONE_IDLE) return;
 
-    if (phone->state == PHONE_NOTIFICATION){
-        // Open the message from pop-up
-        if (IsKeyPressed(KEY_R)){
-            phone->state = PHONE_OPENED;
-            return;
-        }
-    } else if (phone->state == PHONE_OPENED){
+    if (phone->state == PHONE_OPENED){
         // Reply buttons layout (must match DrawPhone)
         int btnHeight = 50;
         Rectangle btn1 = {phone->phoneBox.x + 20, phone->phoneBox.y + phone->phoneBox.height - 120, phone->phoneBox.width - 40, (float)btnHeight};
@@ -168,10 +172,5 @@ void HandlePhoneInput(Phone *phone){
             strncpy(phone->selected_reply, phone->replies[choice], sizeof(phone->selected_reply) - 1);
             phone->state = PHONE_SHOWING_REPLY;
         }
-    }
-
-    // Toggle close
-    if (IsKeyPressed(KEY_R)){
-        phone->state = PHONE_IDLE;
     }
 }

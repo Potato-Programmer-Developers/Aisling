@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include "ctype.h"
+#include "game_context.h"
+#include "assets.h"
 
 static char* trim(char* str){
     // Remove leading and trailing whitespace from a string
@@ -73,7 +75,8 @@ void LoadStoryDay(StorySystem* story, const char* path) {
 
         // Known Tags
         if (strstr(line, "[LOCATION]")){
-            if (strstr(line, "INTERIOR")) phase->location = STORY_LOC_INTERIOR;
+            if (strstr(line, "APARTMENT")) phase->location = STORY_LOC_APARTMENT;
+            else if (strstr(line, "INTERIOR")) phase->location = STORY_LOC_INTERIOR;
             else if (strstr(line, "EXTERIOR")) phase->location = STORY_LOC_EXTERIOR;
             else phase->location = STORY_LOC_NONE;
         } else if (strstr(line, "[INTERACTABLE_TYPE_ITEM]")){
@@ -100,6 +103,13 @@ void LoadStoryDay(StorySystem* story, const char* path) {
                 } else if (strcmp(type_str, "TIME_PASS") == 0){
                     phase->end_condition.type = CONDITION_TIME_PASS;
                     sscanf(line, "[CONDITION] TIME_PASS %f", &phase->end_condition.target_value);
+                } else if (strcmp(type_str, "ENTER_LOCATION") == 0){
+                    phase->end_condition.type = CONDITION_ENTER_LOCATION;
+                    char loc_str[32];
+                    if (sscanf(line, "[CONDITION] ENTER_LOCATION %s", loc_str) == 1){
+                        if (strcmp(loc_str, "INTERIOR") == 0) phase->end_condition.target_value = (float)STORY_LOC_INTERIOR;
+                        else if (strcmp(loc_str, "EXTERIOR") == 0) phase->end_condition.target_value = (float)STORY_LOC_EXTERIOR;
+                    }
                 }
             }
         } else if (strstr(line, "[END]")){
@@ -121,7 +131,8 @@ void LoadStoryDay(StorySystem* story, const char* path) {
     story->phase_timer = 0;
 }
 
-void UpdateStory(StorySystem* story, float delta) {
+void UpdateStory(struct GameContext* game_context, float delta) {
+    StorySystem* story = &game_context->story;
     StoryPhase* active = GetActivePhase(story);
     if (!active) return;
 
@@ -135,13 +146,13 @@ void UpdateStory(StorySystem* story, float delta) {
                 }
             }
             // If all quests are done (or there are no quests), we can advance
-            if (all_done) AdvanceStory(story);
+            if (all_done) AdvanceStory(game_context);
         } break;
 
         case CONDITION_TIME_PASS:
             story->phase_timer += delta;
             if (story->phase_timer >= active->end_condition.target_value) {
-                AdvanceStory(story);
+                AdvanceStory(game_context);
             }
             break;
 
@@ -150,7 +161,9 @@ void UpdateStory(StorySystem* story, float delta) {
     }
 }
 
-void AdvanceStory(StorySystem* story) {
+void AdvanceStory(struct GameContext* game_context) {
+    StorySystem* story = &game_context->story;
+    TraceLog(LOG_INFO, "ADVANCING STORY from S%d P%d", story->current_set_idx, story->current_phase_idx);
     if (story->current_set_idx < 0 || story->current_set_idx >= MAX_SETS_PER_DAY) return;
     
     StoryPhase* old = GetActivePhase(story);
@@ -166,7 +179,11 @@ void AdvanceStory(StorySystem* story) {
             story->current_phase_idx = story->sets[story->current_set_idx].phase_count - 1;
         }
     }
+    
     StoryPhase* next = GetActivePhase(story);
+    if (next) {
+        LoadPhaseAssets(next, game_context);
+    }
 }
 
 StoryPhase* GetActivePhase(StorySystem* story) {

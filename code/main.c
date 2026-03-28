@@ -36,7 +36,7 @@ int main(void){
     InitGame(&game_settings);
 
     Data game_data = LoadData(&game_settings);
-    Map game_map = InitMap("../assets/map/map_int/APARTMENT MAP.json");
+    Map game_map = InitMap("../assets/map/map_apart/APARTMENT MAP.json");
     Character player = InitCharacter(&game_settings, &game_data, &game_map);
     Audio game_audio = InitAudio(&game_settings);
     Scene game_scene = InitScene(&game_settings);
@@ -46,7 +46,7 @@ int main(void){
     memset(game_dialogue, 0, sizeof(Dialogue));
     
     GameContext* game_context = (GameContext*)malloc(sizeof(GameContext));
-    InitGameContext(game_context, &game_map, &player, INTERIOR);
+    InitGameContext(game_context, &game_map, &player, APARTMENT);
     
     LoadStoryDay(&game_context->story, "../assets/text/day1/day1.txt");
     StoryPhase* initial = GetActivePhase(&game_context->story);

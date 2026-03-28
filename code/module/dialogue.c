@@ -126,6 +126,7 @@ void LoadInteraction(const char* filename, Dialogue* dialogue){
     memset(dialogue, 0, sizeof(Dialogue));
 
     FILE* file = fopen(filename, "r");
+    if (!file) return;
 
     // Pools for choices and responses - static to avoid stack issues
     static char choice_pool[4][10][MAX_LINE_LENGTH];
@@ -177,6 +178,19 @@ void LoadInteraction(const char* filename, Dialogue* dialogue){
                     global_pool[global_count][MAX_LINE_LENGTH - 1] = '\0';
                     global_count++;
                 }
+            }
+        } else if (strstr(line, "[END]")){
+            if (current_choice_idx != -1 && current_choice_idx < 4) {
+                dialogue->choice_ends[current_choice_idx] = true;
+            }
+        } else if (strstr(line, "[KARMA]")){
+            if (current_choice_idx != -1 && current_choice_idx < 4) {
+                int delta = 0;
+                if (strstr(line, "++")) delta = 20;
+                else if (strstr(line, "--")) delta = -20;
+                else if (strstr(line, "+")) delta = 10;
+                else if (strstr(line, "-")) delta = -10;
+                dialogue->choice_karma[current_choice_idx] = delta;
             }
         } else if (line[0] != '['){
             if (current_choice_idx == -1 && global_count < MAX_DIALOGUE_LINES){

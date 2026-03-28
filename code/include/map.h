@@ -16,6 +16,7 @@
 #define MAX_TILESETS 64
 
 typedef enum {
+    APARTMENT,
     EXTERIOR,
     INTERIOR,
     FARM,

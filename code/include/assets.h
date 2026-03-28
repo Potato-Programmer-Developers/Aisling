@@ -28,4 +28,12 @@ void LoadPhaseAssets(StoryPhase* phase, GameContext* context);
  */
 void UnloadLocationAssets(GameContext* context);
 
+/**
+ * @brief Updates the persistent karma for an asset in the registry.
+ * 
+ * @param id The unique ID of the asset.
+ * @param delta The amount to change karma by.
+ */
+void UpdateAssetKarma(const char* id, int delta);
+
 #endif

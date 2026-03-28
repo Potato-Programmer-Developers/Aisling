@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include "raymath.h"
 #include "assets.h"
+#include <stdbool.h>
+
+static char current_interactable_id[64] = "";
 
 void LoadNPCs(NPC npcs[], int count){
     for (int i = 0; i < count; i++){
@@ -46,7 +49,7 @@ void CheckInteractable(NPC worldNPCs[], Item worldItems[], Door worldDoors[],
                 min_dist = dist;
                 *objectToInteractWith = (Interactable*)&worldNPCs[i];
             }
-        } else { worldNPCs[i].base.isActive = false; }
+        } else {worldNPCs[i].base.isActive = false;}
     }
 
     for (int i = 0; i < itemCount; i++){
@@ -59,7 +62,7 @@ void CheckInteractable(NPC worldNPCs[], Item worldItems[], Door worldDoors[],
                 min_dist = dist;
                 *objectToInteractWith = (Interactable*)&worldItems[i];
             }
-        } else { worldItems[i].base.isActive = false; }
+        } else {worldItems[i].base.isActive = false;}
     }
 
     for (int i = 0; i < doorCount; i++){
@@ -72,19 +75,19 @@ void CheckInteractable(NPC worldNPCs[], Item worldItems[], Door worldDoors[],
                 min_dist = dist;
                 *objectToInteractWith = (Interactable*)&worldDoors[i];
             }
-        } else { worldDoors[i].base.isActive = false; }
+        } else {worldDoors[i].base.isActive = false;}
     }
 }
 
 void InteractWithObject(Interactable* objectToInteractWith, Dialogue* game_dialogue, 
     GameState* game_state, Character *player, Map *map, struct GameContext *game_context){
     
-    if (*game_state == DIALOGUE_CUTSCENE) {
+    if (*game_state == DIALOGUE_CUTSCENE){
         InteractWithNPC(NULL, game_dialogue, game_state, game_context);
         return;
     }
 
-    if (objectToInteractWith == NULL) {
+    if (objectToInteractWith == NULL){
         return;
     }
 
@@ -102,7 +105,7 @@ void InteractWithObject(Interactable* objectToInteractWith, Dialogue* game_dialo
 
     // Story Advance Check
     StoryPhase* active = GetActivePhase(&game_context->story);
-    if (active && strcmp(active->name, "SET1-PHASE1") == 0) {
+    if (active && strcmp(active->name, "SET1-PHASE1") == 0){
         if (active->quest_count > 1) active->quests[1].completed = true;
     }
 }
@@ -110,57 +113,108 @@ void InteractWithObject(Interactable* objectToInteractWith, Dialogue* game_dialo
 void InteractWithNPC(NPC *npc, Dialogue *game_dialogue, GameState *game_state, struct GameContext *game_context){
     if (*game_state == GAMEPLAY && npc != NULL){
         LoadInteraction(npc->base.dialoguePath, game_dialogue);
-        if (game_dialogue->line_count > 0 || game_dialogue->choice_count > 0) {
+        if (game_dialogue->line_count > 0 || game_dialogue->choice_count > 0){
             *game_state = DIALOGUE_CUTSCENE;
+            strncpy(current_interactable_id, npc->base.interactable_id, 63);
+            game_dialogue->selected_choice = -1;
         }
     } else if (*game_state == DIALOGUE_CUTSCENE){
         // 1. Choice selection (1-4 keys)
-        if (game_dialogue->choice_count > 0 && game_dialogue->current_line >= game_dialogue->line_count - 1) {
+        if (game_dialogue->choice_count > 0 && game_dialogue->current_line >= game_dialogue->line_count - 1){
             int key = 0;
             if (IsKeyPressed(KEY_ONE)) key = 1;
             else if (IsKeyPressed(KEY_TWO)) key = 2;
             else if (IsKeyPressed(KEY_THREE)) key = 3;
             else if (IsKeyPressed(KEY_FOUR)) key = 4;
 
-            if (key > 0 && key <= game_dialogue->choice_count) {
+            if (key > 0 && key <= game_dialogue->choice_count){
                 int idx = key - 1;
                 memset(game_dialogue->lines, 0, sizeof(game_dialogue->lines));
                 strncpy(game_dialogue->lines[0], game_dialogue->choice_responses[idx], MAX_LINE_LENGTH-1);
                 game_dialogue->line_count = 1;
                 game_dialogue->current_line = 0;
                 game_dialogue->choice_count = 0;
+                game_dialogue->selected_choice = idx;
                 
-                if (strstr(game_dialogue->lines[0], "END SET")) {
-                    AdvanceStory(&game_context->story);
+                // Apply Karma
+                if (game_dialogue->choice_karma[idx] != 0){
+                    UpdateAssetKarma(current_interactable_id, game_dialogue->choice_karma[idx]);
+                }
+                
+                TraceLog(LOG_INFO, "CHOICE SELECTED: id=%s, idx=%d, ends=%d", current_interactable_id, idx, game_dialogue->choice_ends[idx]);
+                
+                // Story Progression Check
+                StoryPhase* active = GetActivePhase(&game_context->story);
+                if (active) {
+                    TraceLog(LOG_INFO, "STORY CHECK: phase=%s, cond=%d, target=%s %f", 
+                        active->name, active->end_condition.type, active->end_condition.target_id, active->end_condition.target_value);
+                }
+
+                if (active && active->end_condition.type == CONDITION_INTERACT_OBJECT){
+                    if (strcmp(active->end_condition.target_id, current_interactable_id) == 0 &&
+                        ((int)active->end_condition.target_value == (idx + 1) || (int)active->end_condition.target_value == 0)){
+                        if (game_dialogue->choice_ends[idx] || (int)active->end_condition.target_value == 0){
+                            TraceLog(LOG_INFO, "STORY ADVANCE Triggered via choice.");
+                            AdvanceStory(game_context);
+                        }
+                    }
+                }
+                
+                if (strstr(game_dialogue->lines[0], "END SET")){
+                    AdvanceStory(game_context);
                 }
             }
             return; // BLOCKS standard SPACE progression during choice selection
         }
 
         // 2. Standard dialogue progression (only on SPACE)
-        if (IsKeyPressed(KEY_SPACE)) {
+        if (IsKeyPressed(KEY_SPACE)){
             game_dialogue->current_line++;
-            if (game_dialogue->current_line >= game_dialogue->line_count) {
+            if (game_dialogue->current_line >= game_dialogue->line_count){
                 *game_state = GAMEPLAY;
                 game_dialogue->current_line = 0;
+
+                // Check Story Condition for Object Interaction finish
+                StoryPhase* active = GetActivePhase(&game_context->story);
+                if (active && active->end_condition.type == CONDITION_INTERACT_OBJECT){
+                    bool condition_met = false;
+                    if (strcmp(active->end_condition.target_id, current_interactable_id) == 0){
+                        int target_choice = (int)active->end_condition.target_value;
+                        if (target_choice == 0){
+                            condition_met = true;
+                        } else if (game_dialogue->selected_choice == target_choice - 1){
+                            if (game_dialogue->choice_ends[game_dialogue->selected_choice]){
+                                condition_met = true;
+                            }
+                        }
+                    }
+
+                    if (condition_met){
+                        AdvanceStory(game_context);
+                    }
+                }
             }
         }
     }
 }
 
 void InteractWithItem(Item *item, Dialogue *game_dialogue, GameState *game_state, Character *player, struct GameContext *game_context){
-    if (item->is_pickup) {
+    if (item->is_pickup){
         strcpy(player->inventory[player->inventory_count], item->base.texturePath);
         player->item_count[player->inventory_count]++;
         player->inventory_count++;
         item->picked_up = true;
-    } else {
+    } else{
         LoadInteraction(item->base.dialoguePath, game_dialogue);
-        if (game_dialogue->line_count > 0 || game_dialogue->choice_count > 0) *game_state = DIALOGUE_CUTSCENE;
+        if (game_dialogue->line_count > 0 || game_dialogue->choice_count > 0){
+            *game_state = DIALOGUE_CUTSCENE;
+            strncpy(current_interactable_id, item->base.interactable_id, 63);
+            game_dialogue->selected_choice = -1;
+        }
     }
 }
 
-void InteractWithDoor(Door *door, Map *map, Character *player, struct GameContext *game_context) {
+void InteractWithDoor(Door *door, Map *map, Character *player, struct GameContext *game_context){
     if (door == NULL || map == NULL || player == NULL || game_context == NULL) return;
 
     char targetMap[128];

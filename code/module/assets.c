@@ -14,27 +14,28 @@ typedef struct {
     Rectangle bounds;
     InteractableType type;
     char dialoguePath[128];
+    int karma;                 // Persistent karma for this NPC / Object
 } AssetMetadata;
 
 static AssetMetadata ASSET_REGISTRY[] = {
     // --- Interior Assets ---
-    {"fridge", "../assets/map/map_int/fridge.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/fridge.txt"},
-    {"plant", "../assets/map/map_int/plant.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/plant.txt"},
-    {"sofa", "../assets/map/map_int/couchff.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/sofa.txt"},
-    {"oven", "../assets/map/map_int/oven.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/oven.txt"},
-    {"sink", "../assets/map/map_int/sink cabinet.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/sink.txt"},
-    {"bathtub", "../assets/map/map_int/bathtub.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/bathtub.txt"},
-    {"toilet", "../assets/map/map_int/toilet.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/toilet.txt"},
-    {"lamp", "../assets/map/map_int/lamp.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/lamp.txt"},
-    {"cabinet", "../assets/map/map_int/tallcabinet.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/cabinet.txt"},
-    {"bed", "../assets/map/map_int/bed.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/bed.txt"},
-    {"table", "../assets/map/map_int/foodtable.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/table.txt"},
+    {"fridge", "../assets/map/map_apart/fridge.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/fridge.txt", 0},
+    {"plant", "../assets/map/map_apart/plant.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/plant.txt", 0},
+    {"sofa", "../assets/map/map_apart/couchff.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/sofa.txt", 0},
+    {"oven", "../assets/map/map_apart/oven.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/oven.txt", 0},
+    {"sink", "../assets/map/map_apart/sink cabinet.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/sink.txt", 0},
+    {"bathtub", "../assets/map/map_apart/bathtub.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/bathtub.txt", 0},
+    {"toilet", "../assets/map/map_apart/toilet.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/toilet.txt", 0},
+    {"lamp", "../assets/map/map_apart/lamp.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/lamp.txt", 0},
+    {"cabinet", "../assets/map/map_apart/tallcabinet.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/cabinet.txt", 0},
+    {"bed", "../assets/map/map_apart/bed.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/bed.txt", 0},
+    {"table", "../assets/map/map_apart/foodtable.png", {0, 0, 0, 0}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase1/table.txt", 0},
 
     // --- Exterior Assets ---
-    {"potato", "../assets/images/item/potato.png", {1200, 1500, 64, 64}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase2/potato.txt"},
-    {"big tree", "../assets/images/item/tree.png", {1500, 1000, 192, 256}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase2/big tree.txt"},
-    {"tree", "../assets/images/npc/tree.png", {1000, 1100, 96, 128}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase2/tree.txt"},
-    {"farmer", "../assets/images/npc/farmer.png", {1600, 1200, 64, 96}, INTERACTABLE_TYPE_NPC, "../assets/text/day1/phase2/farmer.txt"},
+    {"potato", "../assets/images/items/potato.png", {1200, 1500, 64, 64}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase2/potato.txt", 0},
+    {"big tree", "../assets/map/map_ext/big tree.png", {1500, 1000, 192, 256}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase2/big tree.txt", 0},
+    {"tree", "../assets/map/map_ext/tree.png", {1000, 1100, 96, 128}, INTERACTABLE_TYPE_ITEM, "../assets/text/day1/phase2/tree.txt", 0},
+    {"farmer", "../assets/images/character/oldman.png", {1600, 1200, 64, 96}, INTERACTABLE_TYPE_NPC, "../assets/text/day1/phase2/farmer.txt", 0},
 };
 
 static int REGISTRY_COUNT = sizeof(ASSET_REGISTRY) / sizeof(ASSET_REGISTRY[0]);
@@ -44,6 +45,15 @@ static AssetMetadata* FindInRegistry(const char* id) {
         if (strcmp(ASSET_REGISTRY[i].id, id) == 0) return &ASSET_REGISTRY[i];
     }
     return NULL;
+}
+
+void UpdateAssetKarma(const char* id, int delta) {
+    AssetMetadata* meta = FindInRegistry(id);
+    if (meta) {
+        meta->karma += delta;
+        if (meta->karma > 100) meta->karma = 100;
+        if (meta->karma < -100) meta->karma = -100; 
+    }
 }
 
 void LoadPhaseAssets(StoryPhase* phase, GameContext* context) {
@@ -106,7 +116,8 @@ void LoadPhaseAssets(StoryPhase* phase, GameContext* context) {
 }
 
 void LoadLocationAssets(Location location, GameContext* context) {
-    context->location = location;
+    // Note: context->location update is handled by callers (state.c or interaction.c) 
+    // to avoid race conditions with map transition detection.
 }
 
 void UnloadLocationAssets(GameContext* context) {

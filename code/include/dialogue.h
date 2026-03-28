@@ -48,6 +48,8 @@ typedef struct {
     char choice_responses[4][MAX_LINE_LENGTH];                // Follow-up text for each choice
     int choice_count;                                         // Number of available choices
     int selected_choice;                                      // Input from player
+    int choice_karma[4];                                      // Karma change from each choice
+    bool choice_ends[4];                                      // If choice response has [END]
 } Dialogue;
 
 /**

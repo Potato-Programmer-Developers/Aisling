@@ -9,7 +9,6 @@ This is a C-based psychological thriller game built with the [Raylib](https://ww
 - **Character System**: Dynamic movement with idle, walk, and run animations.
 - **Dialogue System**: Scripted interactions with world objects through text files.
 - **Audio Architecture**: Managed background music and SFX (e.g., screams).
-- **Post-Processing**: Screen-space vignette effect for enhanced atmosphere for the game.
 
 ## Project Structure
 
@@ -40,19 +39,16 @@ For the first method:
 1.  Open your terminal and navigate to the project root.
 2.  Go into the `code` directory:
 3.  Compile the project using the provided Makefile:
-4. If your computer is not set up for make, you can use the following command:
+4. If your computer is not set up for using `make` command, you can use the following command:
     ```
-    gcc -Iinclude main.c -o main.exe -Llib -laudio -lsettings -lcharacter -lscene -linteractive -lmap -lgame_context -ldata -ldialogue -lraylib -lopengl32 -lgdi32 -lwinmm
+    gcc -Iinclude main.c -o main.exe -Llib -lraylib -lsettings -laudio -lscene -linteractive -lmap -lcharacter -lgame_context -ldata -ldialogue -linteraction -lstate -lphone -lassets -lstory -lopengl32 -lgdi32 -lwinmm
     ```
 
-For the second method:
-1. Open your folder and navigate to the `code` folder.
+Note: No rebuild is required if you choose the second method.
 
 ### Running the Game
 
-After a successful build, run the executable: `.\main.exe` for the first method.
-
-Run or double-click the `main.exe` file for the second method.
+After a successful build, run the executable, type `.\main.exe` on the terminal for the first method, or double-click the `main.exe` file for the second method.
 
 Note:
 If the second method is not possible in your device, you may need to use the first method.
@@ -63,7 +59,7 @@ If you do not have MinGW, you can downnload in [MSYS2](https://www.msys2.org) we
 
 - **Movement**: Arrow Keys or WASD
 - **Sprinting**: Hold Shift
-- **Interaction**: Press `Enter` when near an object
+- **Interaction**: Press `E` when near an object
 - **Pause/Menu**: Press `Esc`
 
 ## 👥 Authors
